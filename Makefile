@@ -18,6 +18,7 @@ build-image:
 
 run-container:
 > docker run -v $(shell pwd)/transfer:/transfer backup-utility:$(VERSION)
+> chown -R pyrix25633:pyrix25633 ./transfer/docker/*
 
 run-dotnet-debug:
 > dotnet ./transfer/docker/debug/backup-utility.dll
