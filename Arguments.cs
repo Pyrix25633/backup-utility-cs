@@ -7,11 +7,13 @@ public class Arguments {
         destination = "";
         errors = 0;
         repeat = false;
+        log = false;
+        help = false;
     }
     public string source, destination;
     public string? removed;
     public Int32 time;
-    public bool repeat;
+    public bool repeat, log, help;
     public Int16 errors; 
 
     /// <summary>
@@ -27,15 +29,19 @@ public class Arguments {
             if(args[i][0] == '-') {
                 switch(args[i]) {
                     case "-s":
+                    case "--source":
                         source = args[i + 1];
                         break;
                     case "-d":
+                    case "--destination":
                         destination = args[i + 1];
                         break;
                     case "-r":
+                    case "--removed":
                         removed = args[i + 1];
                         break;
                     case "-t":
+                    case "--time":
                         string s = args[i + 1];
                         if(!char.IsNumber(s[s.Length - 1])) {
                             char unit = s[s.Length - 1];
@@ -62,6 +68,29 @@ public class Arguments {
                         }
                         repeat = true;
                         break;
+                    case "-l":
+                    case "--log":
+                        log = true;
+                        break;
+                    case "-h":
+                    case "--help":
+                        Console.ForegroundColor = ConsoleColor.Cyan;
+                        Console.WriteLine("Usage: backup-utility [ARGUMENTS]");
+                        Console.WriteLine();
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        Console.WriteLine("Mandatory arguments");
+                        Console.WriteLine("  -s, --source\t\t[DIRECTORY]\t\tThe source folder");
+                        Console.WriteLine("  -d, --destination\t[DIRECTORY]\t\tThe destination folder");
+                        Console.WriteLine();
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine("Optional arguments");
+                        Console.WriteLine("  -r, --removed\t\t[DIRECTORY]\t\tThe folder for removed files");
+                        Console.WriteLine("  -t, --time\t\t[TIME]\t\t\tThe delay time, e.g. 100 or 100s or 15m or 7h");
+                        Console.WriteLine("  -l, --log\t\t\t\t\tLogs to file");
+                        Console.WriteLine("  -h, --help\t\t[DIRECTORY]\t\tPrints help message and exits");
+                        Console.ResetColor();
+                        help = true;
+                        break;
                     case "--":
                         break;
                     default:
@@ -70,5 +99,6 @@ public class Arguments {
                 }
             }
         }
+        if(source == "" || destination == "") errors += 1;
     }
 }

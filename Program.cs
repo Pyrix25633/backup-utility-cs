@@ -7,6 +7,7 @@ public class Program {
         Arguments arguments = new Arguments();
         try {
             arguments.Parse(args);
+            if(arguments.help) return;
             if(arguments.errors != 0) {
                 if(arguments.errors == 255)
                     Logger.Error("Missing arguments!");
@@ -19,7 +20,7 @@ public class Program {
             Logger.Error("Exception parsing arguments: " + e);
             return;
         }
-        //Logging Info
+        // Logging Info
         Logger.Info("Backup utility " + version);
         Logger.Info("Source file: " + arguments.source);
         Logger.Info("Destination folder: " + arguments.destination);
@@ -31,7 +32,7 @@ public class Program {
             Logger.Info("Delay time: " + arguments.time.ToString() + "s");
         else
             Logger.Info("Delay time not set, program will exit when backup will is finished");
-        //Checking for source, destination and removed existance
+        // Checking for source, destination and removed existance
         if(!Directory.Exists(arguments.source)) {
             Logger.Error("Source folder does not exist!");
             return;
@@ -59,6 +60,6 @@ public class Program {
                     return;
                 }
             }
-        }
+        }   
     }
 }
