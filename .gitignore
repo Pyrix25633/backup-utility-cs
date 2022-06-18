@@ -1,3 +1,4 @@
 bin/
 obj/
 transfer/docker
+test/

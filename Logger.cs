@@ -42,13 +42,15 @@ public class Logger {
     }
     /// <summary>
     /// Function to clear the last console line
+    ///(<paramref name="line"/>)
     /// </summary>
-    public static void RemoveLine() {
+    /// <param name="line">The line to remove, default 1</param>
+    public static void RemoveLine(Int16 line = 1) {
         Int32 currentLineCursor = Console.CursorTop;
-        Console.SetCursorPosition(0, currentLineCursor - 1);
+        Console.SetCursorPosition(0, currentLineCursor - line);
         for (Int32 i = 0; i < Console.WindowWidth; i++)
             Console.Write(" ");
-        Console.SetCursorPosition(0, currentLineCursor - 1);
+        Console.SetCursorPosition(0, currentLineCursor - line);
     }
     /// <summary>
     /// Function to output the hour
