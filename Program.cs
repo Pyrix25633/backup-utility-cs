@@ -20,23 +20,18 @@ public class Program {
             Logger.Error("Exception parsing arguments: " + e);
             return;
         }
+        // Initialize logger
+        Logger.InitializeLogging(arguments.log);
         // Logging Info
         Logger.Info("Backup utility " + version);
-        Logger.Info("Source file: " + arguments.source);
-        Logger.Info("Destination folder: " + arguments.destination);
-        if(arguments.removed != null)
-            Logger.Info("Folder for removed files: " + arguments.removed);
-        else
-            Logger.Info("Folder for removed files is not set, they will be permanently removed");
-        if(arguments.repeat)
-            Logger.Info("Delay time: " + arguments.time.ToString() + "s");
-        else
-            Logger.Info("Delay time not set, program will exit when backup will is finished");
-        // Checking for source, destination and removed existance
+        // Source
+        Logger.Info("Source folder: " + arguments.source);
         if(!Directory.Exists(arguments.source)) {
             Logger.Error("Source folder does not exist!");
             return;
         }
+        // Destination
+        Logger.Info("Destination folder: " + arguments.destination);
         if(!Directory.Exists(arguments.destination)) {
             Logger.Warning("Destination folder does not exist, attempting creation");
             try {
@@ -48,7 +43,9 @@ public class Program {
                 return;
             }
         }
+        // Removed
         if(arguments.removed != null) {
+            Logger.Info("Folder for removed files: " + arguments.removed);
             if(!Directory.Exists(arguments.removed)) {
                 Logger.Warning("Folder for removed files does not exist, attempting creation");
                 try {
@@ -60,6 +57,22 @@ public class Program {
                     return;
                 }
             }
-        }   
+        }
+        else Logger.Info("Folder for removed files is not set, they will be permanently removed");
+        // Delay time
+        if(arguments.repeat) Logger.Info("Delay time: " + arguments.time.ToString() + "s");
+        else Logger.Info("Delay time not set, program will exit when backup will is finished");
+        // Log
+        if(arguments.log) Logger.Info("Logging to file");
+        // Extensions
+        if(arguments.extensions != null) {
+            Logger.Info("File with the list of extensions to check for sha256: " + arguments.extensions);
+            if(!File.Exists(arguments.extensions)) {
+                Logger.Error("File with the list of extensions to check for sha256 does not exist!");
+                return;
+            }
+        }
+        //Close log stream
+        Logger.TerminateLogging();
     }
 }

@@ -11,7 +11,7 @@ public class Arguments {
         help = false;
     }
     public string source, destination;
-    public string? removed;
+    public string? removed, extensions;
     public Int32 time;
     public bool repeat, log, help;
     public Int16 errors; 
@@ -68,9 +68,21 @@ public class Arguments {
                         }
                         repeat = true;
                         break;
+                    case "-e":
+                    case "--extensions":
+                        extensions = args[i + 1];
+                        break;
                     case "-l":
                     case "--log":
                         log = true;
+                        break;
+                    case "-f":
+                    case "--file":
+                        string line = "backup-tool ";
+                        foreach(string item in args) {
+                            line += item + " ";
+                        }
+                        File.WriteAllTextAsync(args[i + 1], line);
                         break;
                     case "-h":
                     case "--help":
@@ -79,15 +91,17 @@ public class Arguments {
                         Console.WriteLine();
                         Console.ForegroundColor = ConsoleColor.Yellow;
                         Console.WriteLine("Mandatory arguments");
-                        Console.WriteLine("  -s, --source\t\t[DIRECTORY]\t\tThe source folder");
-                        Console.WriteLine("  -d, --destination\t[DIRECTORY]\t\tThe destination folder");
+                        Console.WriteLine("  -s, --source        [DIRECTORY]      The source folder");
+                        Console.WriteLine("  -d, --destination   [DIRECTORY]      The destination folder");
                         Console.WriteLine();
                         Console.ForegroundColor = ConsoleColor.Green;
                         Console.WriteLine("Optional arguments");
-                        Console.WriteLine("  -r, --removed\t\t[DIRECTORY]\t\tThe folder for removed files");
-                        Console.WriteLine("  -t, --time\t\t[TIME]\t\t\tThe delay time, e.g. 100 or 100s or 15m or 7h");
-                        Console.WriteLine("  -l, --log\t\t\t\t\tLogs to file");
-                        Console.WriteLine("  -h, --help\t\t[DIRECTORY]\t\tPrints help message and exits");
+                        Console.WriteLine("  -r, --removed       [DIRECTORY]      The folder for removed files");
+                        Console.WriteLine("  -t, --time          [TIME]           The delay time, e.g. 100 or 100s or 15m or 7h");
+                        Console.WriteLine("  -e, --extensions    [FILENAME]       File with the list of extensions to check for sha256");
+                        Console.WriteLine("  -l, --log                            Logs to file");
+                        Console.WriteLine("  -f, --file          [FILENAME]       Saves the command to a script");
+                        Console.WriteLine("  -h, --help          [DIRECTORY]      Prints help message and exits");
                         Console.ResetColor();
                         help = true;
                         break;

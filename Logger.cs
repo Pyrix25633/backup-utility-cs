@@ -1,18 +1,47 @@
+using System.IO.Compression;
+
 public class Logger {
     private static string barFull = "█", barEmpty = " ";
+    private static string? logfilename;
+    private static StreamWriter? logstream;
+    /// <summary>
+    /// Function to initialize the file logging
+    /// (<paramref name="log"/>)
+    /// </summary>
+    /// <param name="log">If the logger has to log to file</param>
+    public static void InitializeLogging(bool log) {
+        if(!log) return;
+        int year = DateTime.Now.Year, month = DateTime.Now.Month, day = DateTime.Now.Day,
+            hour = DateTime.Now.Hour, minute = DateTime.Now.Minute, 
+            second = DateTime.Now.Second, millisecond = DateTime.Now.Millisecond;
+        logfilename = year.ToString() +  "-" + (month < 10 ? "0" : "") + month.ToString() + "-" +
+               (day < 10 ? "0" : "") + day.ToString() + "_" + (hour < 10 ? "0" : "") + hour.ToString() + "." +
+               (minute < 10 ? "0" : "") + minute.ToString() + "." + (second < 10 ? "0" : "") + second.ToString() + "." +
+               (millisecond < 100 ? (millisecond < 10 ? "00" : "0") : "") + millisecond.ToString() + ".log";
+        IEnumerable<string> logfiles = Directory.EnumerateFiles("./", "*.log");
+        foreach(string item in logfiles) {
+            Compress(item);
+        }
+        logstream = File.CreateText(logfilename);
+    }
+    public static void TerminateLogging() {
+        if(logstream != null) logstream.Close();
+    }
     /// <summary>
     /// Function to output a success message
     /// (<paramref name="message"/>)
     /// </summary>
     /// <param name="message">The message to output</param>
     public static void Success(string message) {
+        string time = TimeString();
         Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.Write(GetHour());
+        Console.Write(time);
         Console.ForegroundColor = ConsoleColor.Green;
         Console.Write("(Success) ");
         Console.ForegroundColor = ConsoleColor.White;
         Console.WriteLine(message);
         Console.ResetColor();
+        if(logstream != null) logstream.WriteLineAsync(time + "(Success) " + message);
     }
     /// <summary>
     /// Function to output an info message
@@ -21,7 +50,7 @@ public class Logger {
     /// <param name="message">The message to output</param>
     public static void Info(string message) {
         Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.Write(GetHour());
+        Console.Write(TimeString());
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.Write("(Info) ");
         Console.ForegroundColor = ConsoleColor.White;
@@ -34,13 +63,15 @@ public class Logger {
     /// </summary>
     /// <param name="message">The message to output</param>
     public static void Warning(string message) {
+        string time = TimeString(); 
         Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.Write(GetHour());
+        Console.Write(time);
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.Write("(Warning) ");
         Console.ForegroundColor = ConsoleColor.White;
         Console.WriteLine(message);
         Console.ResetColor();
+        if(logstream != null) logstream.WriteLineAsync(time + "(Warning) " + message);
     }
     /// <summary>
     /// Function to output an error message
@@ -48,13 +79,15 @@ public class Logger {
     /// </summary>
     /// <param name="message">The message to output</param>
     public static void Error(string message) {
+        string time = TimeString();
         Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.Write(GetHour());
+        Console.Write(time);
         Console.ForegroundColor = ConsoleColor.Red;
         Console.Write("(Error) ");
         Console.ForegroundColor = ConsoleColor.White;
         Console.WriteLine(message);
         Console.ResetColor();
+        if(logstream != null) logstream.WriteLineAsync(time + "(Error) " + message);
     }
     /// <summary>
     /// Function to clear the last console line
@@ -72,13 +105,13 @@ public class Logger {
     /// Function to output the hour
     /// </summary>
     public static void WriteHour() {
-        Console.Write(GetHour());
+        Console.Write(TimeString());
     }
     /// <summary>
-    /// Function to get the string hour
+    /// Function to get the string time
     /// </summary>
-    /// <returns>The string hour</returns>
-    public static string GetHour() {
+    /// <returns>The string time</returns>
+    public static string TimeString() {
         int hour = DateTime.Now.Hour, minute = DateTime.Now.Minute, 
             second = DateTime.Now.Second, millisecond = DateTime.Now.Millisecond;
         return "[" + (hour < 10 ? "0" : "") + hour.ToString() + ":" + (minute < 10 ? "0" : "") + minute.ToString() + ":" +
@@ -132,5 +165,35 @@ public class Logger {
         Int16 GiBytes = (Int16)Math.Floor((float)MiBytes / unit);
         MiBytes %= unit;
         return GiBytes.ToString() + "GiB&" + MiBytes.ToString() + "MiB";
+    }
+    /// <summary>
+    /// Function to compress a file to .gz
+    /// (<paramref name="filename"/>)
+    /// </summary>
+    /// <param name="filename">The name of the file to compress</param>
+    public static void Compress(string filename) {
+        FileInfo fi = new FileInfo(filename);
+        // Get the stream of the source file.
+        using (FileStream inFile = fi.OpenRead()) {
+            // Prevent compressing hidden and 
+            // already compressed files.
+            if((File.GetAttributes(fi.FullName) & FileAttributes.Hidden) != FileAttributes.Hidden & fi.Extension != ".gz") {
+                // Create the compressed file.
+                using (FileStream outFile = File.Create(fi.FullName + ".gz")) {
+                    using (GZipStream Compress = new GZipStream(outFile, CompressionMode.Compress)) {
+                        // Copy the source file into 
+                        // the compression stream.
+                        inFile.CopyTo(Compress);
+                    }
+                }
+            }
+        }
+        try {
+            File.Delete(filename);
+            Info("Compressed " + filename);
+        }
+        catch(Exception e) {
+            Warning("Could not compress " + filename + ", error: " + e);
+        }
     }
 }
