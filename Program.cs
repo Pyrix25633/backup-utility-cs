@@ -5,7 +5,8 @@ public class Program {
         // Version
         string version = "1.4.0";
         // Lists
-        string[] sourceList, destinationList;
+        string[] sourceList = new string[0], destinationList = new string[0];
+        FileInfo[] sourceInfoList = new FileInfo[0], destinationInfoList = new FileInfo[0];
         EnumerationOptions enumOptions = new EnumerationOptions();
         enumOptions.RecurseSubdirectories = true;
         // Parsing arguments
@@ -100,12 +101,37 @@ public class Program {
                 Logger.Error("Error while scanning destination folder: " + e);
                 continue;
             }
+            // Build file info
+            Logger.Info("Building source file info list...");
+            try {
+                foreach(string item in sourceList) {
+                    sourceInfoList.Append(new FileInfo(item));
+                }
+                Logger.Success("Source file info list built");
+            }
+            catch(Exception e) {
+                Logger.Error("Error while building source file info list: " + e);
+                continue;
+            }
+            sourceList = new string[0];
+            Logger.Info("Building source file info list...");
+            try {
+                foreach(string item in sourceList) {
+                    sourceInfoList.Append(new FileInfo(item));
+                }
+                Logger.Success("Source file info list built");
+            }
+            catch(Exception e) {
+                Logger.Error("Error while building source file info list: " + e);
+                continue;
+            }
+            destinationList = new string[0];
             // Close log stream
             Logger.TerminateLogging();
             if(!arguments.repeat) break;
             Thread.Sleep(arguments.time * 1000);
             // Reopen log stream
-            Logger.InitializeLogging(arguments.log);
+            Logger.ReinitializeLogging();
         }
     }
 }

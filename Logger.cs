@@ -24,9 +24,15 @@ public class Logger {
         }
         logstream = File.CreateText(logfilename);
     }
+    /// <summary>
+    /// Function to reopen the log stream
+    /// </summary>
     public static void ReinitializeLogging() {
         if(logfilename != null) logstream = new StreamWriter(logfilename, append: true);
     }
+    /// <summary>
+    /// Function to close the log stream
+    /// </summary>
     public static void TerminateLogging() {
         if(logstream != null) logstream.Close();
     }
@@ -180,7 +186,7 @@ public class Logger {
         using (FileStream inFile = fi.OpenRead()) {
             // Prevent compressing hidden and 
             // already compressed files.
-            if((File.GetAttributes(fi.FullName) & FileAttributes.Hidden) != FileAttributes.Hidden & fi.Extension != ".gz") {
+            if((File.GetAttributes(fi.FullName) & FileAttributes.Hidden) != FileAttributes.Hidden) {
                 // Create the compressed file.
                 using (FileStream outFile = File.Create(fi.FullName + ".gz")) {
                     using (GZipStream Compress = new GZipStream(outFile, CompressionMode.Compress)) {
