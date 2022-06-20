@@ -24,6 +24,9 @@ public class Logger {
         }
         logstream = File.CreateText(logfilename);
     }
+    public static void ReinitializeLogging() {
+        if(logfilename != null) logstream = new StreamWriter(logfilename, append: true);
+    }
     public static void TerminateLogging() {
         if(logstream != null) logstream.Close();
     }

@@ -2,7 +2,12 @@ using System;
 
 public class Program {
     static void Main(string[] args) {
+        // Version
         string version = "1.4.0";
+        // Lists
+        string[] sourceList, destinationList;
+        EnumerationOptions enumOptions = new EnumerationOptions();
+        enumOptions.RecurseSubdirectories = true;
         // Parsing arguments
         Arguments arguments = new Arguments();
         try {
@@ -72,7 +77,35 @@ public class Program {
                 return;
             }
         }
-        //Close log stream
-        Logger.TerminateLogging();
+        else {
+            Logger.Info("Extension list not set, only file size will be used to compare files");
+        }
+        while(true) {
+            // Scan folders
+            Logger.Info("Starting source folder scan...");
+            try {
+                sourceList = Directory.EnumerateFileSystemEntries(arguments.source, "*", enumOptions).ToArray();
+                Logger.Success("Source folder scanned: " + sourceList.Length + " items found");
+            }
+            catch(Exception e) {
+                Logger.Error("Error while scanning source folder: " + e);
+                continue;
+            }
+            Logger.Info("Starting destination folder scan...");
+            try {
+                destinationList = Directory.EnumerateFileSystemEntries(arguments.destination, "*", enumOptions).ToArray();
+                Logger.Success("Destination folder scanned: " + destinationList.Length + " items found");
+            }
+            catch(Exception e) {
+                Logger.Error("Error while scanning destination folder: " + e);
+                continue;
+            }
+            // Close log stream
+            Logger.TerminateLogging();
+            if(!arguments.repeat) break;
+            Thread.Sleep(arguments.time * 1000);
+            // Reopen log stream
+            Logger.InitializeLogging(arguments.log);
+        }
     }
 }
