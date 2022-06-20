@@ -9,11 +9,12 @@ public class Arguments {
         repeat = false;
         log = false;
         help = false;
+        allExtensions = false;
     }
     public string source, destination;
     public string? removed, extensions;
     public Int32 time;
-    public bool repeat, log, help;
+    public bool repeat, log, help, allExtensions;
     public Int16 errors; 
 
     /// <summary>
@@ -71,6 +72,7 @@ public class Arguments {
                     case "-e":
                     case "--extensions":
                         extensions = args[i + 1];
+                        allExtensions = (extensions == "*");
                         break;
                     case "-l":
                     case "--log":
@@ -98,7 +100,8 @@ public class Arguments {
                         Console.WriteLine("Optional arguments");
                         Console.WriteLine("  -r, --removed       [DIRECTORY]      The folder for removed files");
                         Console.WriteLine("  -t, --time          [TIME]           The delay time, e.g. 100 or 100s or 15m or 7h");
-                        Console.WriteLine("  -e, --extensions    [FILENAME]       File with the list of extensions to check for sha256");
+                        Console.WriteLine("  -e, --extensions    [FILENAME]       File with the list of extensions to check for content differences,");
+                        Console.WriteLine("                                       [FILENAME] = '*' stands for all extensions");
                         Console.WriteLine("  -l, --log                            Logs to file");
                         Console.WriteLine("  -f, --file          [FILENAME]       Saves the command to a script");
                         Console.WriteLine("  -h, --help          [DIRECTORY]      Prints help message and exits");
