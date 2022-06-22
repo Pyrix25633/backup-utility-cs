@@ -72,7 +72,7 @@ public class Arguments {
                     case "-e":
                     case "--extensions":
                         extensions = args[i + 1];
-                        allExtensions = (extensions == "*");
+                        allExtensions = (extensions == "all");
                         break;
                     case "-l":
                     case "--log":
@@ -101,7 +101,7 @@ public class Arguments {
                         Console.WriteLine("  -r, --removed       [DIRECTORY]      The folder for removed files");
                         Console.WriteLine("  -t, --time          [TIME]           The delay time, e.g. 100 or 100s or 15m or 7h");
                         Console.WriteLine("  -e, --extensions    [FILENAME]       File with the list of extensions to check for content differences,");
-                        Console.WriteLine("                                       [FILENAME] = '*' stands for all extensions");
+                        Console.WriteLine("                                       [FILENAME] = 'all' stands for all extensions");
                         Console.WriteLine("  -l, --log                            Logs to file");
                         Console.WriteLine("  -f, --file          [FILENAME]       Saves the command to a script");
                         Console.WriteLine("  -h, --help          [DIRECTORY]      Prints help message and exits");

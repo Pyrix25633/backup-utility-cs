@@ -5,10 +5,13 @@ public class Program {
         // Version
         string version = "1.4.0";
         // Lists
-        string[] sourceList = new string[0], destinationList = new string[0];
-        FileInfo[] sourceInfoList = new FileInfo[0], destinationInfoList = new FileInfo[0];
+        string[] sourceList = new string[0], destinationList = new string[0], extensionList = new string[0];
+        DirectoryEntry[] sourceInfoList = new DirectoryEntry[0], destinationInfoList = new DirectoryEntry[0],
+            toCopyList = new DirectoryEntry[0], toRemoveFileList = new DirectoryEntry[0], toRemoveFolderList = new DirectoryEntry[0];
         EnumerationOptions enumOptions = new EnumerationOptions();
         enumOptions.RecurseSubdirectories = true;
+        // Other variables
+        Int64 length, filesToCopy, foldersToCopy, sizeToCopy, filesToRemove, foldersToRemove, sizeToRemove;
         // Parsing arguments
         Arguments arguments = new Arguments();
         try {
@@ -49,6 +52,9 @@ public class Program {
                 return;
             }
         }
+        // Getting full path
+        arguments.source = new FileInfo(arguments.source).FullName;
+        arguments.destination = new FileInfo(arguments.destination).FullName;
         // Removed
         if(arguments.removed != null) {
             Logger.Info("Folder for removed files: " + arguments.removed);
@@ -72,10 +78,23 @@ public class Program {
         if(arguments.log) Logger.Info("Logging to file");
         // Extensions
         if(arguments.extensions != null) {
-            Logger.Info("File with the list of extensions to check for sha256: " + arguments.extensions);
-            if(!File.Exists(arguments.extensions)) {
-                Logger.Error("File with the list of extensions to check for sha256 does not exist!");
-                return;
+            if(arguments.allExtensions) {
+                Logger.Info("All extensions will be checked for content changes");
+            }
+            else {
+                Logger.Info("File with the list of extensions to check for content changes: " + arguments.extensions);
+                if(!File.Exists(arguments.extensions)) {
+                    Logger.Error("File with the list of extensions to check for content changes does not exist!");
+                    return;
+                }
+                try {
+                    extensionList = File.ReadAllLines(arguments.extensions);
+                    Logger.Success("Extension list succesfully retrieved from file");
+                }
+                catch(Exception e) {
+                    Logger.Error("Could not retrieve extension list from file, error: " + e);
+                    return;
+                }
             }
         }
         else {
@@ -105,7 +124,7 @@ public class Program {
             Logger.Info("Building source file info list...");
             try {
                 foreach(string item in sourceList) {
-                    sourceInfoList.Append(new FileInfo(item));
+                    sourceInfoList = sourceInfoList.Append(new DirectoryEntry(item, arguments.source)).ToArray();
                 }
                 Logger.Success("Source file info list built");
             }
@@ -114,18 +133,55 @@ public class Program {
                 continue;
             }
             sourceList = new string[0];
-            Logger.Info("Building source file info list...");
+            Logger.Info("Building destination file info list...");
             try {
-                foreach(string item in sourceList) {
-                    sourceInfoList.Append(new FileInfo(item));
+                foreach(string item in destinationList) {
+                    destinationInfoList = destinationInfoList.Append(new DirectoryEntry(item, arguments.destination)).ToArray();
                 }
-                Logger.Success("Source file info list built");
+                Logger.Success("Destination file info list built");
             }
             catch(Exception e) {
-                Logger.Error("Error while building source file info list: " + e);
+                Logger.Error("Error while building destination file info list: " + e);
                 continue;
             }
             destinationList = new string[0];
+            // Items to copy
+            Logger.Info("Determining items to copy...");
+            length = sourceInfoList.Length;
+            filesToCopy = 0; foldersToCopy = 0; sizeToCopy = 0;
+            for(Int64 i = 0; i < length; i++) {
+                if(sourceInfoList[i].ToCopy(destinationInfoList, arguments.allExtensions, extensionList)) {
+                    toCopyList = toCopyList.Append(sourceInfoList[i]).ToArray();
+                    if((sourceInfoList[i].fileInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory) {
+                        foldersToCopy++;
+                    }
+                    else {
+                        filesToCopy++;
+                        sizeToCopy += sourceInfoList[i].fileInfo.Length;
+                    }
+                }
+            }
+            Logger.Success(foldersToCopy.ToString() + " folders and " + filesToCopy.ToString() + " files to copy (" +
+                Logger.HumanReadableSize(sizeToCopy) + ")");
+            // Items to remove
+            Logger.Info("Determining items to remove...");
+            length = destinationInfoList.Length;
+            filesToRemove = 0; foldersToRemove = 0; sizeToRemove = 0;
+            for(Int64 i = 0; i < length; i++) {
+                if(destinationInfoList[i].ToRemove(sourceInfoList)) {
+                    if((destinationInfoList[i].fileInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory) {
+                        toRemoveFolderList = toRemoveFolderList.Append(destinationInfoList[i]).ToArray();
+                        foldersToRemove++;
+                    }
+                    else {
+                        toRemoveFileList = toRemoveFileList.Append(destinationInfoList[i]).ToArray();
+                        filesToRemove++;
+                        sizeToRemove += destinationInfoList[i].fileInfo.Length;
+                    }
+                }
+            }
+            Logger.Success(foldersToRemove.ToString() + " folders and " + filesToRemove.ToString() + " files to remove (" +
+                Logger.HumanReadableSize(sizeToRemove) + ")");
             // Close log stream
             Logger.TerminateLogging();
             if(!arguments.repeat) break;
