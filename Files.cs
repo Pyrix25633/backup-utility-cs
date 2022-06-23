@@ -8,6 +8,7 @@ public class DirectoryEntry {
     }
     public string relativePath;
     public FileInfo fileInfo;
+    public Reason reason;
     /// <summary>
     /// Function to search in the destination folder for the same file and compare them
     /// (<paramref name="destinationList"/>, <paramref name="allExtensions"/>, <paramref name="extensions"/>)
@@ -20,14 +21,14 @@ public class DirectoryEntry {
         Int64 pos;
         bool found = IsInList(destinationList, out pos);
         if(!found) {
-            Logger.Info("To copy because not there: " + relativePath);
+            reason = Reason.CopyNotThere;
             return true;
         }
         DirectoryEntry e = destinationList[pos];
         if((e.fileInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory) return false;
         // Check size
         if(fileInfo.Length != e.fileInfo.Length) {
-            Logger.Info("To copy because different size: " + relativePath);
+            reason = Reason.CopyDifferentSize;
             return true;
         }
         if(!allExtensions) {
@@ -45,7 +46,7 @@ public class DirectoryEntry {
             stream1.Close();
             stream2.Close();
             bool toCopy = (byte1 != byte2);
-            if(toCopy) Logger.Info("To copy because different content: " + relativePath);
+            if(toCopy) reason = Reason.CopyDifferentContent;
             return toCopy;
         }
         catch(Exception exc) {
@@ -55,7 +56,7 @@ public class DirectoryEntry {
     }
     public bool ToRemove(DirectoryEntry[] sourceList) {
         bool toRemove = !IsInList(sourceList, out _);
-        if(toRemove) Logger.Info("To remove: " + relativePath);
+        if(toRemove) reason = Reason.Remove;
         return toRemove;
     }
     /// <summary>
@@ -72,4 +73,11 @@ public class DirectoryEntry {
         }
         return false;
     }
+}
+
+public enum Reason {
+    CopyNotThere = 0,
+    CopyDifferentSize = 1,
+    CopyDifferentContent = 2,
+    Remove = 3
 }

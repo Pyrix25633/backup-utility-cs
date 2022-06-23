@@ -133,7 +133,7 @@ public class Logger {
     /// </summary>
     /// <param name="current">The current stage</param>
     /// <param name="total">The total</param>
-    public static void ProgressBar(Int64 current, Int64 total) {
+    public static void ProgressBar(UInt64 current, UInt64 total) {
         string bar = "[";
         Int16 percent = (Int16)((float)current / total * 100);
         for(Int16 i = 1; i <= percent; i++) {
@@ -154,24 +154,72 @@ public class Logger {
         Console.ResetColor();
     }
     /// <summary>
+    /// Function to print a message of the file that is being copied
+    /// (<paramref name="reason"/>, <paramref name="file"/>)
+    /// </summary>
+    /// <param name="reason">The reason</param>
+    /// <param name="file">The name of the file</param>
+    public static void InfoReason(Reason reason, string file) {
+        string line = "";
+        switch(reason) {
+            case Reason.CopyNotThere:
+                line = "Copying because not there: ";
+                break;
+            case Reason.CopyDifferentSize:
+                line = "Copying because different size: ";
+                break;
+            case Reason.CopyDifferentContent:
+                line = "Copying because different content: ";
+                break;
+            case Reason.Remove:
+                line = "Removing: ";
+                break;
+        }
+        Info(line + file);
+    }
+    /// <summary>
+    /// Function to print a message of the file that has been copied
+    /// (<paramref name="reason"/>, <paramref name="file"/>)
+    /// </summary>
+    /// <param name="reason">The reason</param>
+    /// <param name="file">The name of the file</param>
+    public static void SuccessReason(Reason reason, string file) {
+        string line = "";
+        switch(reason) {
+            case Reason.CopyNotThere:
+                line = "Copied because not there: ";
+                break;
+            case Reason.CopyDifferentSize:
+                line = "Copied because different size: ";
+                break;
+            case Reason.CopyDifferentContent:
+                line = "Copied because different content: ";
+                break;
+            case Reason.Remove:
+                line = "Removed: ";
+                break;
+        }
+        Success(line + file);
+    }
+    /// <summary>
     /// Function to print a progress bar string
     /// (<paramref name="size"/>)
     /// </summary>
     /// <param name="size">The size in bytes</param>
     /// <returns>A string with size and unit</returns>
-    public static string HumanReadableSize(Int64 size) {
-        Int16 unit = 1024;
+    public static string HumanReadableSize(UInt64 size) {
+        UInt16 unit = 1024;
         // Bytes
         if(size < unit) return size.ToString() + "B";
         // KiBytes
-        Int64 KiBytes = (Int64)Math.Floor((float)size / unit);
-        Int16 Bytes = (Int16)(size % unit);
+        UInt64 KiBytes = (UInt64)Math.Floor((float)size / unit);
+        UInt16 Bytes = (UInt16)(size % unit);
         if(KiBytes < unit) return KiBytes.ToString() + "KiB&" + Bytes.ToString() + "B";
         // MiBytes
-        Int32 MiBytes = (Int32)Math.Floor((float)KiBytes / unit);
+        UInt32 MiBytes = (UInt32)Math.Floor((float)KiBytes / unit);
         KiBytes %= unit;
         if(MiBytes < unit) return MiBytes.ToString() + "MiB&" + KiBytes.ToString() + "KiB";
-        Int16 GiBytes = (Int16)Math.Floor((float)MiBytes / unit);
+        UInt16 GiBytes = (UInt16)Math.Floor((float)MiBytes / unit);
         MiBytes %= unit;
         return GiBytes.ToString() + "GiB&" + MiBytes.ToString() + "MiB";
     }

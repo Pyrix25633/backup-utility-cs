@@ -21,7 +21,7 @@ run-container:
 > chown -R pyrix25633:pyrix25633 ./transfer/docker/*
 
 run-dotnet-debug:
-> dotnet ./transfer/docker/debug/backup-utility.dll -- -s test/source -d test/destination -r test/removed -t 100 -e all -l
+> dotnet ./transfer/docker/debug/backup-utility.dll -- -s test/source -d test/destination -r test/removed -t 100 -e extensions.txt -l
 
 run-dotnet-release:
 > ./transfer/docker/release/linux-x64/backup-utility

@@ -11,7 +11,9 @@ public class Program {
         EnumerationOptions enumOptions = new EnumerationOptions();
         enumOptions.RecurseSubdirectories = true;
         // Other variables
-        Int64 length, filesToCopy, foldersToCopy, sizeToCopy, filesToRemove, foldersToRemove, sizeToRemove;
+        Int32 length, filesToCopy, filesCopied, foldersToCopy, foldersCopied,
+            filesToRemove, filesRemoved, foldersToRemove, foldersRemoved;
+        UInt64 sizeToCopy, sizeCopied, sizeToRemove, sizeRemoved;
         // Parsing arguments
         Arguments arguments = new Arguments();
         try {
@@ -69,6 +71,8 @@ public class Program {
                     return;
                 }
             }
+            // Getting full path
+            if(Directory.Exists(arguments.removed)) arguments.removed = new FileInfo(arguments.removed).FullName;
         }
         else Logger.Info("Folder for removed files is not set, they will be permanently removed");
         // Delay time
@@ -149,7 +153,7 @@ public class Program {
             Logger.Info("Determining items to copy...");
             length = sourceInfoList.Length;
             filesToCopy = 0; foldersToCopy = 0; sizeToCopy = 0;
-            for(Int64 i = 0; i < length; i++) {
+            for(Int32 i = 0; i < length; i++) {
                 if(sourceInfoList[i].ToCopy(destinationInfoList, arguments.allExtensions, extensionList)) {
                     toCopyList = toCopyList.Append(sourceInfoList[i]).ToArray();
                     if((sourceInfoList[i].fileInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory) {
@@ -157,17 +161,18 @@ public class Program {
                     }
                     else {
                         filesToCopy++;
-                        sizeToCopy += sourceInfoList[i].fileInfo.Length;
+                        sizeToCopy += (UInt64)sourceInfoList[i].fileInfo.Length;
                     }
                 }
             }
-            Logger.Success(foldersToCopy.ToString() + " folders and " + filesToCopy.ToString() + " files to copy (" +
+            Logger.Success(foldersToCopy.ToString() + " folder" + (foldersToCopy == 1 ? "" : "s") + " and " +
+                filesToCopy.ToString() + " file" + (filesToCopy == 1 ? "" : "s") + " to copy (" +
                 Logger.HumanReadableSize(sizeToCopy) + ")");
             // Items to remove
             Logger.Info("Determining items to remove...");
             length = destinationInfoList.Length;
             filesToRemove = 0; foldersToRemove = 0; sizeToRemove = 0;
-            for(Int64 i = 0; i < length; i++) {
+            for(Int32 i = 0; i < length; i++) {
                 if(destinationInfoList[i].ToRemove(sourceInfoList)) {
                     if((destinationInfoList[i].fileInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory) {
                         toRemoveFolderList = toRemoveFolderList.Append(destinationInfoList[i]).ToArray();
@@ -176,12 +181,141 @@ public class Program {
                     else {
                         toRemoveFileList = toRemoveFileList.Append(destinationInfoList[i]).ToArray();
                         filesToRemove++;
-                        sizeToRemove += destinationInfoList[i].fileInfo.Length;
+                        sizeToRemove += (UInt64)destinationInfoList[i].fileInfo.Length;
                     }
                 }
             }
-            Logger.Success(foldersToRemove.ToString() + " folders and " + filesToRemove.ToString() + " files to remove (" +
+            Logger.Success(foldersToRemove.ToString() + " folder" + (foldersToRemove == 1 ? "" : "s") + " and " +
+                filesToRemove.ToString() + " file" + (filesToRemove == 1 ? "" : "s") + " to remove (" +
                 Logger.HumanReadableSize(sizeToRemove) + ")");
+            // Clear info lists
+            sourceInfoList = new DirectoryEntry[0]; destinationInfoList = new DirectoryEntry[0];
+            // Copy files
+            length = toCopyList.Length;
+            filesCopied = 0; foldersCopied = 0; sizeCopied = 0;
+            for(Int32 i = 0; i < length; i++) {
+                DirectoryEntry e = toCopyList[i];
+                Logger.InfoReason(e.reason, e.relativePath);
+                Logger.ProgressBar(sizeCopied, sizeToCopy);
+                string destinationPath = arguments.destination + Path.DirectorySeparatorChar + e.relativePath;
+                if((e.fileInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory) { // Copy folder
+                    try {
+                        Directory.CreateDirectory(destinationPath);
+                        foldersCopied++;
+                        Logger.RemoveLine(); Logger.RemoveLine();
+                        Logger.SuccessReason(e.reason, e.relativePath);
+                    }
+                    catch(Exception exc) {
+                        Logger.RemoveLine(); Logger.RemoveLine();
+                        Logger.Error("Could not copy: " + e.relativePath + ", error: " + exc);
+                    }
+                }
+                else { // Copy file
+                    try {
+                        File.Copy(e.fileInfo.FullName, destinationPath, true);
+                        filesCopied++;
+                        sizeCopied += (UInt64)e.fileInfo.Length;
+                        Logger.RemoveLine(); Logger.RemoveLine();
+                        Logger.SuccessReason(e.reason, e.relativePath);
+                    }
+                    catch(Exception exc) {
+                        Logger.RemoveLine(); Logger.RemoveLine();
+                        Logger.Error("Could not copy: " + e.relativePath + ", error: " + exc);
+                    }
+                }
+            }
+            toCopyList = new DirectoryEntry[0];
+            // Remove files
+            length = toRemoveFileList.Length;
+            filesRemoved = 0; sizeRemoved = 0;
+            for(Int32 i = 0; i < length; i++) {
+                DirectoryEntry e = toRemoveFileList[i];
+                UInt64 fileSize = (UInt64)e.fileInfo.Length;
+                bool err;
+                Logger.InfoReason(e.reason, e.relativePath);
+                Logger.ProgressBar(sizeCopied, sizeToCopy);
+                if(arguments.removed != null) { // Move
+                    string newPath = arguments.removed + Path.DirectorySeparatorChar + e.relativePath;
+                    try {
+                        File.Move(e.fileInfo.FullName, newPath, true);
+                        err = false;
+                    }
+                    catch(Exception exc1) {
+                        try {
+                            Directory.CreateDirectory(newPath.Substring(0, newPath.Length - e.fileInfo.Name.Length));
+                            File.Move(e.fileInfo.FullName, newPath);
+                            err = false;
+                        }
+                        catch(Exception exc2) {
+                            Logger.RemoveLine(); Logger.RemoveLine();
+                            Logger.Error("Could not remove: " + e.relativePath + ", error 1: " + exc1 + ", error 2: " + exc2);
+                            err = true;
+                        }
+                    }
+                }
+                else { // Completely remove
+                    try {
+                        File.Delete(e.fileInfo.FullName);
+                        err = false;
+                    }
+                    catch(Exception exc) {
+                        Logger.RemoveLine(); Logger.RemoveLine();
+                        Logger.Error("Could not remove: " + e.relativePath + ", error: " + exc);
+                        err = true;
+                    }
+                }
+                if(!err) {
+                    sizeRemoved += fileSize;
+                    filesRemoved++;
+                    Logger.RemoveLine(); Logger.RemoveLine();
+                    Logger.SuccessReason(e.reason, e.relativePath);
+                }
+            }
+            toRemoveFileList = new DirectoryEntry[0];
+            // Remove folders
+            length = toRemoveFolderList.Length;
+            foldersRemoved = 0;
+            for(Int32 i = 0; i < length; i++) {
+                DirectoryEntry e = toRemoveFolderList[i];
+                bool err;
+                Logger.InfoReason(e.reason, e.relativePath);
+                if(arguments.removed != null) { // Move
+                    string newPath = arguments.removed + Path.DirectorySeparatorChar + e.relativePath;
+                    try {
+                        Directory.CreateDirectory(newPath);
+                        Directory.Delete(e.fileInfo.FullName);
+                        err = false;
+                    }
+                    catch(Exception exc) {
+                        Logger.RemoveLine();
+                        Logger.Error("Could not remove: " + e.relativePath + ", error: " + exc);
+                        err = true;
+                    }
+                }
+                else { // Completely remove
+                    try {
+                        Directory.Delete(e.fileInfo.FullName);
+                        err = false;
+                    }
+                    catch(Exception exc) {
+                        Logger.RemoveLine();
+                        Logger.Error("Could not remove: " + e.relativePath + ", error: " + exc);
+                        err = true;
+                    }
+                }
+                if(!err) {
+                    foldersRemoved++;
+                    Logger.RemoveLine();
+                    Logger.SuccessReason(e.reason, e.relativePath);
+                }
+            }
+            toRemoveFolderList = new DirectoryEntry[0];
+            // Log copied and removed items
+            Logger.Success(foldersCopied.ToString() + " folder" + (foldersRemoved == 1 ? "" : "s") + " and " +
+                filesCopied.ToString() + " file" + (filesCopied == 1 ? "" : "s") + " copied (" + Logger.HumanReadableSize(sizeCopied) +
+                "), " + foldersRemoved.ToString() + " folder" + (foldersRemoved == 1 ? "" : "s") + " and " +
+                filesRemoved.ToString() + " file" + (filesRemoved == 1 ? "" : "s") + " removed (" + Logger.HumanReadableSize(sizeRemoved) +
+                "), delta: " + (sizeCopied >= sizeRemoved ? "+" : "-") + Logger.HumanReadableSize((UInt64)Math.Abs((float)(sizeCopied - sizeRemoved))));
             // Close log stream
             Logger.TerminateLogging();
             if(!arguments.repeat) break;
