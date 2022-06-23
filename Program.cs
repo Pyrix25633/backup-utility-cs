@@ -12,8 +12,9 @@ public class Program {
         enumOptions.RecurseSubdirectories = true;
         // Other variables
         Int32 length, filesToCopy, filesCopied, foldersToCopy, foldersCopied,
-            filesToRemove, filesRemoved, foldersToRemove, foldersRemoved;
+            filesToRemove, filesRemoved, foldersToRemove, foldersRemoved, sleepTime;
         UInt64 sizeToCopy, sizeCopied, sizeToRemove, sizeRemoved;
+        Int64 timestamp;
         // Parsing arguments
         Arguments arguments = new Arguments();
         try {
@@ -105,6 +106,8 @@ public class Program {
             Logger.Info("Extension list not set, only file size will be used to compare files");
         }
         while(true) {
+            // Timestamp
+            timestamp = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds() + arguments.time;
             // Scan folders
             Logger.Info("Starting source folder scan...");
             try {
@@ -319,7 +322,9 @@ public class Program {
             // Close log stream
             Logger.TerminateLogging();
             if(!arguments.repeat) break;
-            Thread.Sleep(arguments.time * 1000);
+            sleepTime = (Int32)(timestamp - new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds());
+            Logger.Info("Waiting " + sleepTime + " seconds from now, process can be terminated with 'Ctrl + C' before the next scan");
+            if(sleepTime > 0) Thread.Sleep(sleepTime * 1000);
             // Reopen log stream
             Logger.ReinitializeLogging();
         }
