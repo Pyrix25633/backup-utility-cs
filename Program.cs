@@ -3,7 +3,7 @@ using System;
 public class Program {
     static void Main(string[] args) {
         // Version
-        string version = "1.4.0";
+        string version = "1.4.1";
         // Lists
         string[] sourceList = new string[0], destinationList = new string[0], extensionList = new string[0];
         DirectoryEntry[] sourceInfoList = new DirectoryEntry[0], destinationInfoList = new DirectoryEntry[0],
@@ -236,7 +236,7 @@ public class Program {
                 UInt64 fileSize = (UInt64)e.fileInfo.Length;
                 bool err;
                 Logger.InfoReason(e.reason, e.relativePath);
-                Logger.ProgressBar(sizeCopied, sizeToCopy);
+                Logger.ProgressBar(sizeRemoved, sizeToRemove);
                 if(arguments.removed != null) { // Move
                     string newPath = arguments.removed + Path.DirectorySeparatorChar + e.relativePath;
                     try {
@@ -323,8 +323,10 @@ public class Program {
             Logger.TerminateLogging();
             if(!arguments.repeat) break;
             sleepTime = (Int32)(timestamp - new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds());
-            Logger.Info("Waiting " + sleepTime + " seconds from now, process can be terminated with 'Ctrl + C' before the next scan");
-            if(sleepTime > 0) Thread.Sleep(sleepTime * 1000);
+            if(sleepTime > 0) {
+                Logger.Info("Waiting " + sleepTime + " seconds from now, process can be terminated with 'Ctrl + C' before the next scan");
+                Thread.Sleep(sleepTime * 1000);
+            }
             // Reopen log stream
             Logger.ReinitializeLogging();
         }
