@@ -236,7 +236,7 @@ public class Program {
                 UInt64 fileSize = (UInt64)e.fileInfo.Length;
                 bool err;
                 Logger.InfoReason(e.reason, e.relativePath);
-                Logger.ProgressBar(sizeCopied, sizeToCopy);
+                Logger.ProgressBar(sizeRemoved, sizeToRemove);
                 if(arguments.removed != null) { // Move
                     string newPath = arguments.removed + Path.DirectorySeparatorChar + e.relativePath;
                     try {
