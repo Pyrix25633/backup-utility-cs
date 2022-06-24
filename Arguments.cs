@@ -10,11 +10,12 @@ public class Arguments {
         log = false;
         help = false;
         allExtensions = false;
+        backup = false;
     }
     public string source, destination;
     public string? removed, extensions;
     public Int32 time;
-    public bool repeat, log, help, allExtensions;
+    public bool repeat, log, help, allExtensions, backup;
     public Int16 errors; 
 
     /// <summary>
@@ -78,6 +79,10 @@ public class Arguments {
                     case "--log":
                         log = true;
                         break;
+                    case "-b":
+                    case "--backup":
+                        backup = true;
+                        break;
                     case "-f":
                     case "--file":
                         string line = "backup-tool ";
@@ -103,6 +108,7 @@ public class Arguments {
                         Console.WriteLine("  -e, --extensions    [FILENAME]       File with the list of extensions to check for content differences,");
                         Console.WriteLine("                                       [FILENAME] = 'all' stands for all extensions");
                         Console.WriteLine("  -l, --log                            Logs to file");
+                        Console.WriteLine("  -b, --backup                         Makes a compressed copy of the destination folder after the operation");
                         Console.WriteLine("  -f, --file          [FILENAME]       Saves the command to a script");
                         Console.WriteLine("  -h, --help          [DIRECTORY]      Prints help message and exits");
                         Console.ResetColor();

@@ -17,14 +17,15 @@ public class DirectoryEntry {
     /// <param name="allExtensions">If all extensions have to be checked for content differencies</param>
     /// <param name="extensions">The list of the extensions to check for content differencies</param>
     /// <returns>Returns true if the file has to be copied</returns>
-    public bool ToCopy(DirectoryEntry[] destinationList, bool allExtensions, string[] extensions) {
-        Int64 pos;
+    public bool ToCopy(ref DirectoryEntry[] destinationList, bool allExtensions, string[] extensions) {
+        Int32 pos;
         bool found = IsInList(destinationList, out pos);
         if(!found) {
             reason = Reason.CopyNotThere;
             return true;
         }
         DirectoryEntry e = destinationList[pos];
+        destinationList = RemoveAt(destinationList, pos);
         if((e.fileInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory) return false;
         // Check size
         if(fileInfo.Length != e.fileInfo.Length) {
@@ -66,12 +67,23 @@ public class DirectoryEntry {
     /// <param name="list">The list of files</param>
     /// <param name="pos">The returned position</param>
     /// <returns>Returns true if the file is in the list</returns>
-    private bool IsInList(DirectoryEntry[] list, out Int64 pos) {
-        Int64 length = list.Length;
+    private bool IsInList(DirectoryEntry[] list, out Int32 pos) {
+        Int32 length = list.Length;
         for(pos = 0; pos < length; pos++) {
             if(relativePath == list[pos].relativePath) return true;
         }
         return false;
+    }
+    public static DirectoryEntry[] RemoveAt(DirectoryEntry[] source, Int32 index) {
+        Int32 lenght = source.Length;
+        DirectoryEntry[] dest = new DirectoryEntry[lenght - 1];
+        if( index > 0 )
+            Array.Copy(source, 0, dest, 0, index);
+
+        if( index < lenght - 1 )
+            Array.Copy(source, index + 1, dest, index, lenght - index - 1);
+
+        return dest;
     }
 }
 

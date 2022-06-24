@@ -11,13 +11,7 @@ public class Logger {
     /// <param name="log">If the logger has to log to file</param>
     public static void InitializeLogging(bool log) {
         if(!log) return;
-        int year = DateTime.Now.Year, month = DateTime.Now.Month, day = DateTime.Now.Day,
-            hour = DateTime.Now.Hour, minute = DateTime.Now.Minute, 
-            second = DateTime.Now.Second, millisecond = DateTime.Now.Millisecond;
-        logfilename = year.ToString() +  "-" + (month < 10 ? "0" : "") + month.ToString() + "-" +
-               (day < 10 ? "0" : "") + day.ToString() + "_" + (hour < 10 ? "0" : "") + hour.ToString() + "." +
-               (minute < 10 ? "0" : "") + minute.ToString() + "." + (second < 10 ? "0" : "") + second.ToString() + "." +
-               (millisecond < 100 ? (millisecond < 10 ? "00" : "0") : "") + millisecond.ToString() + ".log";
+        logfilename = LongTimeString() + ".log";
         IEnumerable<string> logfiles = Directory.EnumerateFiles("./", "*.log");
         foreach(string item in logfiles) {
             Compress(item);
@@ -119,13 +113,26 @@ public class Logger {
     /// <summary>
     /// Function to get the string time
     /// </summary>
-    /// <returns>The string time</returns>
+    /// <returns>The string time, hh:mm:ss.msmsms</returns>
     public static string TimeString() {
         int hour = DateTime.Now.Hour, minute = DateTime.Now.Minute, 
             second = DateTime.Now.Second, millisecond = DateTime.Now.Millisecond;
         return "[" + (hour < 10 ? "0" : "") + hour.ToString() + ":" + (minute < 10 ? "0" : "") + minute.ToString() + ":" +
                (second < 10 ? "0" : "") + second.ToString() + "." +
                (millisecond < 100 ? (millisecond < 10 ? "00" : "0") : "") + millisecond.ToString() + "] ";
+    }
+    /// <summary>
+    /// Function to get the long string time
+    /// </summary>
+    /// <returns>The long string time, YYYY-MM-DD_hh.mm.ss.msmsms</returns>
+    public static string LongTimeString() {
+        int year = DateTime.Now.Year, month = DateTime.Now.Month, day = DateTime.Now.Day,
+            hour = DateTime.Now.Hour, minute = DateTime.Now.Minute, 
+            second = DateTime.Now.Second, millisecond = DateTime.Now.Millisecond;
+        return year.ToString() +  "-" + (month < 10 ? "0" : "") + month.ToString() + "-" +
+               (day < 10 ? "0" : "") + day.ToString() + "_" + (hour < 10 ? "0" : "") + hour.ToString() + "." +
+               (minute < 10 ? "0" : "") + minute.ToString() + "." + (second < 10 ? "0" : "") + second.ToString() + "." +
+               (millisecond < 100 ? (millisecond < 10 ? "00" : "0") : "") + millisecond.ToString();
     }
     /// <summary>
     /// Function to print a progress bar string

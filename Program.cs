@@ -1,9 +1,10 @@
 using System;
+using System.IO.Compression;
 
 public class Program {
     static void Main(string[] args) {
         // Version
-        string version = "1.4.1";
+        string version = "1.5.0";
         // Lists
         string[] sourceList = new string[0], destinationList = new string[0], extensionList = new string[0];
         DirectoryEntry[] sourceInfoList = new DirectoryEntry[0], destinationInfoList = new DirectoryEntry[0],
@@ -15,6 +16,7 @@ public class Program {
             filesToRemove, filesRemoved, foldersToRemove, foldersRemoved, sleepTime;
         UInt64 sizeToCopy, sizeCopied, sizeToRemove, sizeRemoved;
         Int64 timestamp;
+        string backupFolder = "";
         // Parsing arguments
         Arguments arguments = new Arguments();
         try {
@@ -105,6 +107,23 @@ public class Program {
         else {
             Logger.Info("Extension list not set, only file size will be used to compare files");
         }
+        if(arguments.backup) {
+            Logger.Info("Compressed backup: yes");
+            backupFolder = arguments.destination + "-backups";
+            if(!Directory.Exists(backupFolder)) {
+                Logger.Warning("Folder for backups " + backupFolder + " does not exist, attempting creation");
+                try {
+                    Directory.CreateDirectory(backupFolder);
+                    Logger.Success("Succesfully created folder for backups");
+                }
+                catch(Exception e) {
+                    Logger.Error("Could not create folder for backups, error: " + e);
+                }
+            }
+        }
+        else {
+            Logger.Info("Compressed backup: no");
+        }
         while(true) {
             // Timestamp
             timestamp = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds() + arguments.time;
@@ -157,7 +176,7 @@ public class Program {
             length = sourceInfoList.Length;
             filesToCopy = 0; foldersToCopy = 0; sizeToCopy = 0;
             for(Int32 i = 0; i < length; i++) {
-                if(sourceInfoList[i].ToCopy(destinationInfoList, arguments.allExtensions, extensionList)) {
+                if(sourceInfoList[i].ToCopy(ref destinationInfoList, arguments.allExtensions, extensionList)) {
                     toCopyList = toCopyList.Append(sourceInfoList[i]).ToArray();
                     if((sourceInfoList[i].fileInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory) {
                         foldersToCopy++;
@@ -319,6 +338,19 @@ public class Program {
                 "), " + foldersRemoved.ToString() + " folder" + (foldersRemoved == 1 ? "" : "s") + " and " +
                 filesRemoved.ToString() + " file" + (filesRemoved == 1 ? "" : "s") + " removed (" + Logger.HumanReadableSize(sizeRemoved) +
                 "), delta: " + (sizeCopied >= sizeRemoved ? "+" : "-") + Logger.HumanReadableSize((UInt64)Math.Abs((float)(sizeCopied - sizeRemoved))));
+            // Compressed backup
+            if(arguments.backup) {
+                string backupFileName = Logger.LongTimeString() + ".zip";
+                Logger.Info("Creating compressed backup: " + backupFileName);
+                backupFileName = backupFolder + Path.DirectorySeparatorChar + backupFileName;
+                try {
+                    ZipFile.CreateFromDirectory(arguments.destination, backupFileName);
+                    Logger.Success("Succesfully created compressed backup (" + Logger.HumanReadableSize((UInt64)new FileInfo(backupFileName).Length) + ")");
+                }
+                catch(Exception e) {
+                    Logger.Error("Could not create compressed backup, error: " + e);
+                }
+            }
             // Close log stream
             Logger.TerminateLogging();
             if(!arguments.repeat) break;
