@@ -4,7 +4,7 @@ using System.IO.Compression;
 public class Program {
     static void Main(string[] args) {
         // Version
-        string version = "1.5.0";
+        string version = "1.5.1";
         // Lists
         string[] sourceList = new string[0], destinationList = new string[0], extensionList = new string[0];
         DirectoryEntry[] sourceInfoList = new DirectoryEntry[0], destinationInfoList = new DirectoryEntry[0],
@@ -297,7 +297,7 @@ public class Program {
             // Remove folders
             length = toRemoveFolderList.Length;
             foldersRemoved = 0;
-            for(Int32 i = 0; i < length; i++) {
+            for(Int32 i = length - 1; i >= 0; i--) {
                 DirectoryEntry e = toRemoveFolderList[i];
                 bool err;
                 Logger.InfoReason(e.reason, e.relativePath);
@@ -305,7 +305,7 @@ public class Program {
                     string newPath = arguments.removed + Path.DirectorySeparatorChar + e.relativePath;
                     try {
                         Directory.CreateDirectory(newPath);
-                        Directory.Delete(e.fileInfo.FullName);
+                        Directory.Delete(e.fileInfo.FullName, true);
                         err = false;
                     }
                     catch(Exception exc) {
@@ -316,7 +316,7 @@ public class Program {
                 }
                 else { // Completely remove
                     try {
-                        Directory.Delete(e.fileInfo.FullName);
+                        Directory.Delete(e.fileInfo.FullName, true);
                         err = false;
                     }
                     catch(Exception exc) {
