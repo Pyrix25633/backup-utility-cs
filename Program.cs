@@ -4,7 +4,7 @@ using System.IO.Compression;
 public class Program {
     static void Main(string[] args) {
         // Version
-        string version = "1.5.1";
+        string version = "1.5.2";
         // Lists
         string[] sourceList = new string[0], destinationList = new string[0], extensionList = new string[0];
         DirectoryEntry[] sourceInfoList = new DirectoryEntry[0], destinationInfoList = new DirectoryEntry[0],
@@ -80,7 +80,7 @@ public class Program {
         else Logger.Info("Folder for removed files is not set, they will be permanently removed");
         // Delay time
         if(arguments.repeat) Logger.Info("Delay time: " + arguments.time.ToString() + "s");
-        else Logger.Info("Delay time not set, program will exit when backup will is finished");
+        else Logger.Info("Delay time not set, program will exit when backup will be finished");
         // Log
         if(arguments.log) Logger.Info("Logging to file");
         // Extensions
