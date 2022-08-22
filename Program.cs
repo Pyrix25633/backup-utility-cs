@@ -4,7 +4,7 @@ using System.IO.Compression;
 public class Program {
     static void Main(string[] args) {
         // Version
-        string version = "1.5.2";
+        string version = "1.5.3";
         // Lists
         string[] sourceList = new string[0], destinationList = new string[0], extensionList = new string[0];
         DirectoryEntry[] sourceInfoList = new DirectoryEntry[0], destinationInfoList = new DirectoryEntry[0],
@@ -337,7 +337,7 @@ public class Program {
                 filesCopied.ToString() + " file" + (filesCopied == 1 ? "" : "s") + " copied (" + Logger.HumanReadableSize(sizeCopied) +
                 "), " + foldersRemoved.ToString() + " folder" + (foldersRemoved == 1 ? "" : "s") + " and " +
                 filesRemoved.ToString() + " file" + (filesRemoved == 1 ? "" : "s") + " removed (" + Logger.HumanReadableSize(sizeRemoved) +
-                "), delta: " + (sizeCopied >= sizeRemoved ? "+" : "-") + Logger.HumanReadableSize((UInt64)Math.Abs((float)(sizeCopied - sizeRemoved))));
+                "), delta: " + (sizeCopied >= sizeRemoved ? "+" : "-") + Logger.HumanReadableSize((UInt64)Math.Abs((Int64)sizeCopied - (Int64)sizeRemoved)));
             // Compressed backup
             if(arguments.backup) {
                 string backupFileName = Logger.LongTimeString() + ".zip";
