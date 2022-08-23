@@ -4,13 +4,13 @@ using System.IO.Compression;
 public class Program {
     static void Main(string[] args) {
         // Version
-        string version = "1.5.3";
+        string version = "1.5.4";
         // Lists
         string[] sourceList = new string[0], destinationList = new string[0], extensionList = new string[0];
         DirectoryEntry[] sourceInfoList = new DirectoryEntry[0], destinationInfoList = new DirectoryEntry[0],
             toCopyList = new DirectoryEntry[0], toRemoveFileList = new DirectoryEntry[0], toRemoveFolderList = new DirectoryEntry[0];
         EnumerationOptions enumOptions = new EnumerationOptions();
-        enumOptions.RecurseSubdirectories = true;
+        enumOptions.RecurseSubdirectories = true; enumOptions.AttributesToSkip = default;
         // Other variables
         Int32 length, filesToCopy, filesCopied, foldersToCopy, foldersCopied,
             filesToRemove, filesRemoved, foldersToRemove, foldersRemoved, sleepTime;
