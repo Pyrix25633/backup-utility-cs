@@ -4,7 +4,7 @@ using System.IO.Compression;
 public class Program {
     static void Main(string[] args) {
         // Version
-        string version = "1.5.4";
+        string version = "1.5.5";
         // Lists
         string[] sourceList = new string[0], destinationList = new string[0], extensionList = new string[0];
         DirectoryEntry[] sourceInfoList = new DirectoryEntry[0], destinationInfoList = new DirectoryEntry[0],
@@ -107,6 +107,7 @@ public class Program {
         else {
             Logger.Info("Extension list not set, only file size will be used to compare files");
         }
+        //Compressed Backup
         if(arguments.backup) {
             Logger.Info("Compressed backup: yes");
             backupFolder = arguments.destination + "-backups";

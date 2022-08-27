@@ -110,7 +110,7 @@ public class Arguments {
                         Console.WriteLine("  -l, --log                            Logs to file");
                         Console.WriteLine("  -b, --backup                         Makes a compressed copy of the destination folder after the operation");
                         Console.WriteLine("  -f, --file          [FILENAME]       Saves the command to a script");
-                        Console.WriteLine("  -h, --help          [DIRECTORY]      Prints help message and exits");
+                        Console.WriteLine("  -h, --help                           Prints help message and exits");
                         Console.ResetColor();
                         help = true;
                         break;
