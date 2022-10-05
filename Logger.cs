@@ -4,6 +4,7 @@ public class Logger {
     private static string barFull = "█", barEmpty = " ";
     private static string? logfilename;
     private static StreamWriter? logstream;
+    private static Task? logTask;
     /// <summary>
     /// Function to initialize the file logging
     /// (<paramref name="log"/>)
@@ -27,8 +28,11 @@ public class Logger {
     /// <summary>
     /// Function to close the log stream
     /// </summary>
-    public static void TerminateLogging() {
-        if(logstream != null) logstream.Close();
+    public static async void TerminateLogging() {
+        if(logstream != null) {
+            if(logTask != null) await logTask;
+            logstream.Close();
+        }
     }
     /// <summary>
     /// Function to output a success message
@@ -44,7 +48,7 @@ public class Logger {
         Console.ForegroundColor = ConsoleColor.White;
         Console.WriteLine(message);
         Console.ResetColor();
-        if(logstream != null) logstream.WriteLineAsync(time + "(Success) " + message);
+        if(logstream != null) logTask = logstream.WriteLineAsync(time + "(Success) " + message);
     }
     /// <summary>
     /// Function to output an info message
@@ -74,7 +78,7 @@ public class Logger {
         Console.ForegroundColor = ConsoleColor.White;
         Console.WriteLine(message);
         Console.ResetColor();
-        if(logstream != null) logstream.WriteLineAsync(time + "(Warning) " + message);
+        if(logstream != null) logTask = logstream.WriteLineAsync(time + "(Warning) " + message);
     }
     /// <summary>
     /// Function to output an error message
@@ -90,7 +94,7 @@ public class Logger {
         Console.ForegroundColor = ConsoleColor.White;
         Console.WriteLine(message);
         Console.ResetColor();
-        if(logstream != null) logstream.WriteLineAsync(time + "(Error) " + message);
+        if(logstream != null) logTask = logstream.WriteLineAsync(time + "(Error) " + message);
     }
     /// <summary>
     /// Function to clear the last console line

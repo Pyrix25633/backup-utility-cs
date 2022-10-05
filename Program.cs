@@ -4,7 +4,7 @@ using System.IO.Compression;
 public class Program {
     static void Main(string[] args) {
         // Version
-        string version = "1.5.5";
+        string version = "1.5.6";
         // Lists
         string[] sourceList = new string[0], destinationList = new string[0], extensionList = new string[0];
         DirectoryEntry[] sourceInfoList = new DirectoryEntry[0], destinationInfoList = new DirectoryEntry[0],

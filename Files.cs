@@ -55,6 +55,12 @@ public class DirectoryEntry {
             return false;
         }
     }
+    /// <summary>
+    /// Function to know of a file has to be removed
+    /// (<paramref name="sourceList"/>)
+    /// </summary>
+    /// <param name="sourceList">The list of files in the source folder</param>
+    /// <returns>Returns true if the file has to be removed</returns>
     public bool ToRemove(DirectoryEntry[] sourceList) {
         bool toRemove = !IsInList(sourceList, out _);
         if(toRemove) reason = Reason.Remove;
@@ -74,6 +80,13 @@ public class DirectoryEntry {
         }
         return false;
     }
+    /// <summary>
+    /// Function to search remove an item from a DirectoryEntry array
+    /// (<paramref name="source"/>, <paramref name="index"/>)
+    /// </summary>
+    /// <param name="source">The source DirectoryEntry array</param>
+    /// <param name="index">The index of the item to remove</param>
+    /// <returns>Returns the source array without the item to remove</returns>
     public static DirectoryEntry[] RemoveAt(DirectoryEntry[] source, Int32 index) {
         Int32 lenght = source.Length;
         DirectoryEntry[] dest = new DirectoryEntry[lenght - 1];
