@@ -2,14 +2,16 @@ using System;
 using System.IO.Compression;
 
 public class Program {
-    static void Main(string[] args) {
+    private static Arguments arguments = new Arguments();
+    private static EnumerationOptions enumOptions = new EnumerationOptions();
+    static async Task Main(string[] args) {
         // Version
         string version = "1.5.6";
         // Lists
         string[] sourceList = new string[0], destinationList = new string[0], extensionList = new string[0];
-        DirectoryEntry[] sourceInfoList = new DirectoryEntry[0], destinationInfoList = new DirectoryEntry[0],
-            toCopyList = new DirectoryEntry[0], toRemoveFileList = new DirectoryEntry[0], toRemoveFolderList = new DirectoryEntry[0];
-        EnumerationOptions enumOptions = new EnumerationOptions();
+        Dictionary<string, DirectoryEntry> sourceInfoDictionary = new Dictionary<string, DirectoryEntry>();
+        Dictionary<string, DirectoryEntry> destinationInfoDictionary = new Dictionary<string, DirectoryEntry>();
+        DirectoryEntry[] toCopyList = new DirectoryEntry[0], toRemoveFileList = new DirectoryEntry[0], toRemoveFolderList = new DirectoryEntry[0];
         enumOptions.RecurseSubdirectories = true; enumOptions.AttributesToSkip = default;
         // Other variables
         Int32 length, filesToCopy, filesCopied, foldersToCopy, foldersCopied,
@@ -18,7 +20,6 @@ public class Program {
         Int64 timestamp;
         string backupFolder = "";
         // Parsing arguments
-        Arguments arguments = new Arguments();
         try {
             arguments.Parse(args);
             if(arguments.help) return;
@@ -107,7 +108,7 @@ public class Program {
         else {
             Logger.Info("Extension list not set, only file size will be used to compare files");
         }
-        //Compressed Backup
+        // Compressed Backup
         if(arguments.backup) {
             Logger.Info("Compressed backup: yes");
             backupFolder = arguments.destination + "-backups";
@@ -129,62 +130,30 @@ public class Program {
             // Timestamp
             timestamp = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds() + arguments.time;
             // Scan folders
-            Logger.Info("Starting source folder scan...");
-            try {
-                sourceList = Directory.EnumerateFileSystemEntries(arguments.source, "*", enumOptions).ToArray();
-                Logger.Success("Source folder scanned: " + sourceList.Length + " items found");
-            }
-            catch(Exception e) {
-                Logger.Error("Error while scanning source folder: " + e);
-                continue;
-            }
-            Logger.Info("Starting destination folder scan...");
-            try {
-                destinationList = Directory.EnumerateFileSystemEntries(arguments.destination, "*", enumOptions).ToArray();
-                Logger.Success("Destination folder scanned: " + destinationList.Length + " items found");
-            }
-            catch(Exception e) {
-                Logger.Error("Error while scanning destination folder: " + e);
-                continue;
-            }
+            Task<string[]> sourceTask = scanFolder(arguments.source, true);
+            Task<string[]> destinationTask = scanFolder(arguments.destination, false);
+            sourceList = await sourceTask;
+            destinationList = await destinationTask;
             // Build file info
-            Logger.Info("Building source file info list...");
-            try {
-                foreach(string item in sourceList) {
-                    sourceInfoList = sourceInfoList.Append(new DirectoryEntry(item, arguments.source)).ToArray();
-                }
-                Logger.Success("Source file info list built");
-            }
-            catch(Exception e) {
-                Logger.Error("Error while building source file info list: " + e);
-                continue;
-            }
+            Task<Dictionary<string, DirectoryEntry>> sourceDictionaryTask = buildInfoDictionary(sourceList, arguments.source, true);
+            Task<Dictionary<string, DirectoryEntry>> destinationDictionaryTask = buildInfoDictionary(sourceList, arguments.destination, false);
+            sourceInfoDictionary = await sourceDictionaryTask;
+            destinationInfoDictionary = await sourceDictionaryTask;
             sourceList = new string[0];
-            Logger.Info("Building destination file info list...");
-            try {
-                foreach(string item in destinationList) {
-                    destinationInfoList = destinationInfoList.Append(new DirectoryEntry(item, arguments.destination)).ToArray();
-                }
-                Logger.Success("Destination file info list built");
-            }
-            catch(Exception e) {
-                Logger.Error("Error while building destination file info list: " + e);
-                continue;
-            }
             destinationList = new string[0];
             // Items to copy
             Logger.Info("Determining items to copy...");
-            length = sourceInfoList.Length;
             filesToCopy = 0; foldersToCopy = 0; sizeToCopy = 0;
-            for(Int32 i = 0; i < length; i++) {
-                if(sourceInfoList[i].ToCopy(ref destinationInfoList, arguments.allExtensions, extensionList)) {
-                    toCopyList = toCopyList.Append(sourceInfoList[i]).ToArray();
-                    if((sourceInfoList[i].fileInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory) {
+            foreach(KeyValuePair<string, DirectoryEntry> entry in sourceInfoDictionary) {
+                DirectoryEntry value = entry.Value;
+                if(value.ToCopy(ref destinationInfoDictionary, arguments.allExtensions, extensionList)) {
+                    toCopyList = toCopyList.Append(value).ToArray();
+                    if((value.fileInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory) {
                         foldersToCopy++;
                     }
                     else {
                         filesToCopy++;
-                        sizeToCopy += (UInt64)sourceInfoList[i].fileInfo.Length;
+                        sizeToCopy += (UInt64)value.fileInfo.Length;
                     }
                 }
             }
@@ -193,18 +162,18 @@ public class Program {
                 Logger.HumanReadableSize(sizeToCopy) + ")");
             // Items to remove
             Logger.Info("Determining items to remove...");
-            length = destinationInfoList.Length;
             filesToRemove = 0; foldersToRemove = 0; sizeToRemove = 0;
-            for(Int32 i = 0; i < length; i++) {
-                if(destinationInfoList[i].ToRemove(sourceInfoList)) {
-                    if((destinationInfoList[i].fileInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory) {
-                        toRemoveFolderList = toRemoveFolderList.Append(destinationInfoList[i]).ToArray();
+            foreach(KeyValuePair<string, DirectoryEntry> entry in destinationInfoDictionary) {
+                DirectoryEntry value = entry.Value;
+                if(value.ToRemove(ref sourceInfoDictionary)) {
+                    if((value.fileInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory) {
+                        toRemoveFolderList = toRemoveFolderList.Append(value).ToArray();
                         foldersToRemove++;
                     }
                     else {
-                        toRemoveFileList = toRemoveFileList.Append(destinationInfoList[i]).ToArray();
+                        toRemoveFileList = toRemoveFileList.Append(value).ToArray();
                         filesToRemove++;
-                        sizeToRemove += (UInt64)destinationInfoList[i].fileInfo.Length;
+                        sizeToRemove += (UInt64)value.fileInfo.Length;
                     }
                 }
             }
@@ -212,7 +181,8 @@ public class Program {
                 filesToRemove.ToString() + " file" + (filesToRemove == 1 ? "" : "s") + " to remove (" +
                 Logger.HumanReadableSize(sizeToRemove) + ")");
             // Clear info lists
-            sourceInfoList = new DirectoryEntry[0]; destinationInfoList = new DirectoryEntry[0];
+            sourceInfoDictionary = new Dictionary<string, DirectoryEntry>();
+            destinationInfoDictionary = new Dictionary<string, DirectoryEntry>();
             // Copy files
             length = toCopyList.Length;
             filesCopied = 0; foldersCopied = 0; sizeCopied = 0;
@@ -363,5 +333,55 @@ public class Program {
             // Reopen log stream
             Logger.ReinitializeLogging();
         }
+    }
+
+    /// <summary>
+    /// Function to get the list of files in a folder
+    /// (<paramref name="path"/>, <paramref name="type"/>)
+    /// </summary>
+    /// <param name="path">The path</param>
+    /// <param name="type">True if source folder, false if destination folder</param>
+    /// <returns>Returns the task of a string array</returns>
+    public static async Task<string[]> scanFolder(string path, bool type) {
+        return await Task.Run<string[]>(() => {
+            string[] array;
+            Logger.Info("Starting " + (type ? "source" : "destination") + " folder scan...");
+            try {
+                array = Directory.EnumerateFileSystemEntries(arguments.source, "*", enumOptions).ToArray();
+                Logger.Success((type ? "Source" : "Destination") + " folder scanned: " + array.Length + " items found");
+            }
+            catch(Exception e) {
+                Logger.Error("Error while scanning " + (type ? "source" : "destination") + " folder: " + e);
+                Environment.Exit(1);
+                array = new string[0];
+            }
+            return array;
+        });
+    }
+
+    /// <summary>
+    /// Function to get the list of files in a folder
+    /// (<paramref name="path"/>, <paramref name="type"/>)
+    /// </summary>
+    /// <param name="path">The path</param>
+    /// <param name="type">True if source folder, false if destination folder</param>
+    /// <returns>Returns the task of a string array</returns>
+    public static async Task<Dictionary<string, DirectoryEntry>> buildInfoDictionary(string[] list, string path, bool type) {
+        return await Task.Run<Dictionary<string, DirectoryEntry>>(() => {
+            Dictionary<string, DirectoryEntry> dictionary = new Dictionary<string, DirectoryEntry>();
+            Logger.Info("Building " + (type ? "source" : "destination") + " file info list...");
+            try {
+                foreach(string item in list) {
+                    string relativePath = item.Substring(path.Length + 1);
+                    dictionary[relativePath] = new DirectoryEntry(item, relativePath);
+                }
+                Logger.Success((type ? "Source" : "Destination") + " file info list built");
+            }
+            catch(Exception e) {
+                Logger.Error("Error while building " + (type ? "source" : "destination") + " file info list: " + e);
+                Environment.Exit(2);
+            }
+            return dictionary;
+        });
     }
 }

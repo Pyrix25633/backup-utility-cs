@@ -4,7 +4,8 @@ public class Logger {
     private static string barFull = "█", barEmpty = " ";
     private static string? logfilename;
     private static StreamWriter? logstream;
-    private static Task? logTask;
+    private static List<Task> logTasks = new List<Task>();
+    private static int ticket = 0;
     /// <summary>
     /// Function to initialize the file logging
     /// (<paramref name="log"/>)
@@ -30,8 +31,9 @@ public class Logger {
     /// </summary>
     public static async void TerminateLogging() {
         if(logstream != null) {
-            if(logTask != null) await logTask;
+            if(logTasks.Count != 0) await logTasks[logTasks.Count - 1];
             logstream.Close();
+            logTasks = new List<Task>();
         }
     }
     /// <summary>
@@ -39,62 +41,79 @@ public class Logger {
     /// (<paramref name="message"/>)
     /// </summary>
     /// <param name="message">The message to output</param>
-    public static void Success(string message) {
+    public static async void Success(string message) {
+        int t = ticket++;
         string time = TimeString();
-        Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.Write(time);
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.Write("(Success) ");
-        Console.ForegroundColor = ConsoleColor.White;
-        Console.WriteLine(message);
-        Console.ResetColor();
-        if(logstream != null) logTask = logstream.WriteLineAsync(time + "(Success) " + message);
+        await logTasks.ElementAt(t);
+        logTasks.Append(Task.Run(() => {
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.Write(time);
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.Write("(Success) ");
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine(message);
+            Console.ResetColor();
+            if(logstream != null) logstream.WriteLineAsync(time + "(Success) " + message);
+        }));
     }
     /// <summary>
     /// Function to output an info message
     /// (<paramref name="message"/>)
     /// </summary>
     /// <param name="message">The message to output</param>
-    public static void Info(string message) {
-        Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.Write(TimeString());
-        Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.Write("(Info) ");
-        Console.ForegroundColor = ConsoleColor.White;
-        Console.WriteLine(message);
-        Console.ResetColor();
+    public static async void Info(string message) {
+        int t = ticket++;
+        string time = TimeString();
+        await logTasks.ElementAt(t);
+        logTasks.Append(Task.Run(() => {
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.Write(time);
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.Write("(Info) ");
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine(message);
+            Console.ResetColor();
+        }));
     }
     /// <summary>
     /// Function to output a warning message
     /// (<paramref name="message"/>)
     /// </summary>
     /// <param name="message">The message to output</param>
-    public static void Warning(string message) {
-        string time = TimeString(); 
-        Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.Write(time);
-        Console.ForegroundColor = ConsoleColor.Yellow;
-        Console.Write("(Warning) ");
-        Console.ForegroundColor = ConsoleColor.White;
-        Console.WriteLine(message);
-        Console.ResetColor();
-        if(logstream != null) logTask = logstream.WriteLineAsync(time + "(Warning) " + message);
+    public static async void Warning(string message) {
+        int t = ticket++;
+        string time = TimeString();
+        await logTasks.ElementAt(t);
+        logTasks.Append(Task.Run(() => {
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.Write(time);
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.Write("(Warning) ");
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine(message);
+            Console.ResetColor();
+            if(logstream != null) logstream.WriteLineAsync(time + "(Warning) " + message);
+        }));
     }
     /// <summary>
     /// Function to output an error message
     /// (<paramref name="message"/>)
     /// </summary>
     /// <param name="message">The message to output</param>
-    public static void Error(string message) {
+    public static async void Error(string message) {
+        int t = ticket++;
         string time = TimeString();
-        Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.Write(time);
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.Write("(Error) ");
-        Console.ForegroundColor = ConsoleColor.White;
-        Console.WriteLine(message);
-        Console.ResetColor();
-        if(logstream != null) logTask = logstream.WriteLineAsync(time + "(Error) " + message);
+        await logTasks.ElementAt(t);
+        logTasks.Append(Task.Run(() => {
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.Write(time);
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.Write("(Error) ");
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine(message);
+            Console.ResetColor();
+            if(logstream != null) logstream.WriteLineAsync(time + "(Error) " + message);
+        }));
     }
     /// <summary>
     /// Function to clear the last console line

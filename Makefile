@@ -24,4 +24,5 @@ run-dotnet-debug:
 > dotnet ./transfer/docker/debug/backup-utility.dll -- -s test/source -d test/destination -r test/removed -t 100 -e extensions.txt -l -b
 
 run-dotnet-release:
-> ./transfer/docker/release/linux-x64/backup-utility
+> dotnet publish -c debug
+> ./transfer/docker/release/linux-x64/backup-utility -s test/source -d test/destination -r test/removed -l
