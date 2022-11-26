@@ -1,5 +1,5 @@
 .RECIPEPREFIX=>
-VERSION=1.5.6
+VERSION=1.6.0
 
 default:
 > clear
@@ -24,5 +24,4 @@ run-dotnet-debug:
 > dotnet ./transfer/docker/debug/backup-utility.dll -- -s test/source -d test/destination -r test/removed -t 100 -e extensions.txt -l -b
 
 run-dotnet-release:
-> dotnet publish -c debug
-> ./transfer/docker/release/linux-x64/backup-utility -s test/source -d test/destination -r test/removed -l
+> ./transfer/docker/release/linux-x64/backup-utility -s test/source -d test/destination -r test/removed -l -e extensions.txt

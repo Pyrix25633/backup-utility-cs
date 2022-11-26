@@ -4,8 +4,6 @@ public class Logger {
     private static string barFull = "█", barEmpty = " ";
     private static string? logfilename;
     private static StreamWriter? logstream;
-    private static List<Task> logTasks = new List<Task>();
-    private static int ticket = 0;
     /// <summary>
     /// Function to initialize the file logging
     /// (<paramref name="log"/>)
@@ -29,11 +27,9 @@ public class Logger {
     /// <summary>
     /// Function to close the log stream
     /// </summary>
-    public static async void TerminateLogging() {
+    public static void TerminateLogging() {
         if(logstream != null) {
-            if(logTasks.Count != 0) await logTasks[logTasks.Count - 1];
             logstream.Close();
-            logTasks = new List<Task>();
         }
     }
     /// <summary>
@@ -41,79 +37,63 @@ public class Logger {
     /// (<paramref name="message"/>)
     /// </summary>
     /// <param name="message">The message to output</param>
-    public static async void Success(string message) {
-        int t = ticket++;
+    public static void Success(string message) {
         string time = TimeString();
-        await logTasks.ElementAt(t);
-        logTasks.Append(Task.Run(() => {
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.Write(time);
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.Write("(Success) ");
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine(message);
-            Console.ResetColor();
-            if(logstream != null) logstream.WriteLineAsync(time + "(Success) " + message);
-        }));
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.Write(time);
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.Write("(Success) ");
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.WriteLine(message);
+        Console.ResetColor();
+        if(logstream != null) logstream.WriteLineAsync(time + "(Success) " + message);
     }
     /// <summary>
     /// Function to output an info message
     /// (<paramref name="message"/>)
     /// </summary>
     /// <param name="message">The message to output</param>
-    public static async void Info(string message) {
-        int t = ticket++;
+    public static void Info(string message) {
         string time = TimeString();
-        await logTasks.ElementAt(t);
-        logTasks.Append(Task.Run(() => {
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.Write(time);
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.Write("(Info) ");
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine(message);
-            Console.ResetColor();
-        }));
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.Write(time);
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.Write("(Info) ");
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.WriteLine(message);
+        Console.ResetColor();
     }
     /// <summary>
     /// Function to output a warning message
     /// (<paramref name="message"/>)
     /// </summary>
     /// <param name="message">The message to output</param>
-    public static async void Warning(string message) {
-        int t = ticket++;
+    public static void Warning(string message) {
         string time = TimeString();
-        await logTasks.ElementAt(t);
-        logTasks.Append(Task.Run(() => {
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.Write(time);
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Write("(Warning) ");
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine(message);
-            Console.ResetColor();
-            if(logstream != null) logstream.WriteLineAsync(time + "(Warning) " + message);
-        }));
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.Write(time);
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.Write("(Warning) ");
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.WriteLine(message);
+        Console.ResetColor();
+        if(logstream != null) logstream.WriteLineAsync(time + "(Warning) " + message);
     }
     /// <summary>
     /// Function to output an error message
     /// (<paramref name="message"/>)
     /// </summary>
     /// <param name="message">The message to output</param>
-    public static async void Error(string message) {
-        int t = ticket++;
+    public static void Error(string message) {
         string time = TimeString();
-        await logTasks.ElementAt(t);
-        logTasks.Append(Task.Run(() => {
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.Write(time);
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.Write("(Error) ");
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine(message);
-            Console.ResetColor();
-            if(logstream != null) logstream.WriteLineAsync(time + "(Error) " + message);
-        }));
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.Write(time);
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.Write("(Error) ");
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.WriteLine(message);
+        Console.ResetColor();
+        if(logstream != null) logstream.WriteLineAsync(time + "(Error) " + message);
     }
     /// <summary>
     /// Function to clear the last console line
@@ -123,15 +103,9 @@ public class Logger {
     public static void RemoveLine(Int16 line = 1) {
         Int32 currentLineCursor = Console.CursorTop;
         Console.SetCursorPosition(0, currentLineCursor - line);
-        for (Int32 i = 0; i < Console.WindowWidth; i++)
+        for(Int32 i = 0; i < Console.WindowWidth; i++)
             Console.Write(" ");
         Console.SetCursorPosition(0, currentLineCursor - line);
-    }
-    /// <summary>
-    /// Function to output the hour
-    /// </summary>
-    public static void WriteHour() {
-        Console.Write(TimeString());
     }
     /// <summary>
     /// Function to get the string time
@@ -159,13 +133,15 @@ public class Logger {
     }
     /// <summary>
     /// Function to print a progress bar string
-    /// (<paramref name="current"/>, <paramref name="total"/>)
+    /// (<paramref name="currentSize"/>, <paramref name="totalSize"/>, <paramref name="currentElements"/>, <paramref name="totalElements"/>)
     /// </summary>
-    /// <param name="current">The current stage</param>
-    /// <param name="total">The total</param>
-    public static void ProgressBar(UInt64 current, UInt64 total) {
+    /// <param name="currentSize">The current size</param>
+    /// <param name="totalSize">The total size</param>
+    /// <param name="currentElements">The current number of elements</param>
+    /// <param name="totalElements">The total number of elements</param>
+    public static void ProgressBar(UInt64 currentSize, UInt64 totalSize, Int32 currentElements, Int32 totalElements) {
         string bar = "[";
-        Int16 percent = (Int16)((float)current / total * 100);
+        Int16 percent = (Int16)((float)currentSize / totalSize * 100);
         for(Int16 i = 1; i <= percent; i++) {
             bar += barFull;
         }
@@ -177,7 +153,8 @@ public class Logger {
         }
         Console.BackgroundColor = ConsoleColor.DarkGray;
         Console.Write(bar);
-        bar = "] " + percent.ToString() + "% (" + HumanReadableSize(current) + "/" + HumanReadableSize(total) + ")";
+        bar = "] " + percent.ToString() + "% (" + HumanReadableSize(currentSize) + "/" + HumanReadableSize(totalSize) + ") (" +
+            currentElements + "/" + totalElements + ")";
         Console.ResetColor();
         Console.ForegroundColor = ConsoleColor.DarkYellow;
         Console.WriteLine(bar);
@@ -189,7 +166,7 @@ public class Logger {
     /// </summary>
     /// <param name="reason">The reason</param>
     /// <param name="file">The name of the file</param>
-    public static void InfoReason(Reason reason, string file) {
+    public static void InfoReason(Reason reason, string file, UInt64? size = null) {
         string line = "";
         switch(reason) {
             case Reason.CopyNotThere:
@@ -205,7 +182,7 @@ public class Logger {
                 line = "Removing: ";
                 break;
         }
-        Info(line + file);
+        Info(line + file + " (" + ((size != null) ? HumanReadableSize((UInt64)size) : "folder") + ")");
     }
     /// <summary>
     /// Function to print a message of the file that has been copied
@@ -213,7 +190,7 @@ public class Logger {
     /// </summary>
     /// <param name="reason">The reason</param>
     /// <param name="file">The name of the file</param>
-    public static void SuccessReason(Reason reason, string file) {
+    public static void SuccessReason(Reason reason, string file, UInt64? size = null) {
         string line = "";
         switch(reason) {
             case Reason.CopyNotThere:
@@ -229,7 +206,7 @@ public class Logger {
                 line = "Removed: ";
                 break;
         }
-        Success(line + file);
+        Success(line + file + " (" + ((size != null) ? HumanReadableSize((UInt64)size) : "folder") + ")");
     }
     /// <summary>
     /// Function to print a progress bar string

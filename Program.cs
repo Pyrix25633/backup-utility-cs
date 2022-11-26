@@ -6,8 +6,8 @@ public class Program {
     private static EnumerationOptions enumOptions = new EnumerationOptions();
     static async Task Main(string[] args) {
         // Version
-        string version = "1.5.6";
-        // Lists
+        string version = "1.6.0";
+        // Lists and dictionaries
         string[] sourceList = new string[0], destinationList = new string[0], extensionList = new string[0];
         Dictionary<string, DirectoryEntry> sourceInfoDictionary = new Dictionary<string, DirectoryEntry>();
         Dictionary<string, DirectoryEntry> destinationInfoDictionary = new Dictionary<string, DirectoryEntry>();
@@ -51,7 +51,7 @@ public class Program {
             Logger.Warning("Destination folder does not exist, attempting creation");
             try {
                 Directory.CreateDirectory(arguments.destination);
-                Logger.Success("Destination directory creation succeeded");
+                Logger.Success("Destination directory created");
             }
             catch(Exception e) {
                 Logger.Error("Destination directory creation failed, error: " + e);
@@ -68,7 +68,7 @@ public class Program {
                 Logger.Warning("Folder for removed files does not exist, attempting creation");
                 try {
                     Directory.CreateDirectory(arguments.removed);
-                    Logger.Success("Directory for removed files creation succeeded");
+                    Logger.Success("Directory for removed files created");
                 }
                 catch(Exception e) {
                     Logger.Error("Directory for removed files creation failed, error: " + e);
@@ -97,7 +97,7 @@ public class Program {
                 }
                 try {
                     extensionList = File.ReadAllLines(arguments.extensions);
-                    Logger.Success("Extension list succesfully retrieved from file");
+                    Logger.Success("Extension list retrieved from file");
                 }
                 catch(Exception e) {
                     Logger.Error("Could not retrieve extension list from file, error: " + e);
@@ -116,7 +116,7 @@ public class Program {
                 Logger.Warning("Folder for backups " + backupFolder + " does not exist, attempting creation");
                 try {
                     Directory.CreateDirectory(backupFolder);
-                    Logger.Success("Succesfully created folder for backups");
+                    Logger.Success("Created folder for backups");
                 }
                 catch(Exception e) {
                     Logger.Error("Could not create folder for backups, error: " + e);
@@ -130,15 +130,19 @@ public class Program {
             // Timestamp
             timestamp = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds() + arguments.time;
             // Scan folders
+            Logger.Info("Starting source and destination folders scan...");
             Task<string[]> sourceTask = scanFolder(arguments.source, true);
             Task<string[]> destinationTask = scanFolder(arguments.destination, false);
             sourceList = await sourceTask;
             destinationList = await destinationTask;
+            Logger.Success("Source and destination folders scanned: " + sourceList.Length + " and " + destinationList.Length + " items found");
             // Build file info
+            Logger.Info("Building source and destination file info dictionaries...");
             Task<Dictionary<string, DirectoryEntry>> sourceDictionaryTask = buildInfoDictionary(sourceList, arguments.source, true);
-            Task<Dictionary<string, DirectoryEntry>> destinationDictionaryTask = buildInfoDictionary(sourceList, arguments.destination, false);
+            Task<Dictionary<string, DirectoryEntry>> destinationDictionaryTask = buildInfoDictionary(destinationList, arguments.destination, false);
             sourceInfoDictionary = await sourceDictionaryTask;
-            destinationInfoDictionary = await sourceDictionaryTask;
+            destinationInfoDictionary = await destinationDictionaryTask;
+            Logger.Success("Source and destination file info dictionaries built");
             sourceList = new string[0];
             destinationList = new string[0];
             // Items to copy
@@ -188,10 +192,12 @@ public class Program {
             filesCopied = 0; foldersCopied = 0; sizeCopied = 0;
             for(Int32 i = 0; i < length; i++) {
                 DirectoryEntry e = toCopyList[i];
-                Logger.InfoReason(e.reason, e.relativePath);
-                Logger.ProgressBar(sizeCopied, sizeToCopy);
+                bool isDirectory = (e.fileInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory;
+                UInt64 fileSize = (isDirectory ? 0 : (UInt64)e.fileInfo.Length);
+                Logger.InfoReason(e.reason, e.relativePath, (isDirectory ? null : fileSize));
+                Logger.ProgressBar(sizeCopied, sizeToCopy, foldersCopied + filesCopied, foldersToCopy + filesToCopy);
                 string destinationPath = arguments.destination + Path.DirectorySeparatorChar + e.relativePath;
-                if((e.fileInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory) { // Copy folder
+                if(isDirectory) { // Copy folder
                     try {
                         Directory.CreateDirectory(destinationPath);
                         foldersCopied++;
@@ -199,6 +205,7 @@ public class Program {
                         Logger.SuccessReason(e.reason, e.relativePath);
                     }
                     catch(Exception exc) {
+                        foldersToCopy--;
                         Logger.RemoveLine(); Logger.RemoveLine();
                         Logger.Error("Could not copy: " + e.relativePath + ", error: " + exc);
                     }
@@ -207,11 +214,14 @@ public class Program {
                     try {
                         File.Copy(e.fileInfo.FullName, destinationPath, true);
                         filesCopied++;
-                        sizeCopied += (UInt64)e.fileInfo.Length;
+                        sizeCopied += fileSize;
                         Logger.RemoveLine(); Logger.RemoveLine();
-                        Logger.SuccessReason(e.reason, e.relativePath);
+                        Logger.SuccessReason(e.reason, e.relativePath, fileSize);
                     }
                     catch(Exception exc) {
+                        filesToCopy--;
+                        try {sizeToCopy -= fileSize;}
+                        catch(Exception) {}
                         Logger.RemoveLine(); Logger.RemoveLine();
                         Logger.Error("Could not copy: " + e.relativePath + ", error: " + exc);
                     }
@@ -220,13 +230,13 @@ public class Program {
             toCopyList = new DirectoryEntry[0];
             // Remove files
             length = toRemoveFileList.Length;
-            filesRemoved = 0; sizeRemoved = 0;
+            filesRemoved = 0; sizeRemoved = 0; foldersRemoved = 0;
             for(Int32 i = 0; i < length; i++) {
                 DirectoryEntry e = toRemoveFileList[i];
                 UInt64 fileSize = (UInt64)e.fileInfo.Length;
                 bool err;
-                Logger.InfoReason(e.reason, e.relativePath);
-                Logger.ProgressBar(sizeRemoved, sizeToRemove);
+                Logger.InfoReason(e.reason, e.relativePath, fileSize);
+                Logger.ProgressBar(sizeRemoved, sizeToRemove, foldersRemoved + filesRemoved, foldersToRemove + filesToRemove);
                 if(arguments.removed != null) { // Move
                     string newPath = arguments.removed + Path.DirectorySeparatorChar + e.relativePath;
                     try {
@@ -261,13 +271,17 @@ public class Program {
                     sizeRemoved += fileSize;
                     filesRemoved++;
                     Logger.RemoveLine(); Logger.RemoveLine();
-                    Logger.SuccessReason(e.reason, e.relativePath);
+                    Logger.SuccessReason(e.reason, e.relativePath, fileSize);
+                }
+                else {
+                    filesToRemove--;
+                    try {sizeToRemove -= fileSize;}
+                    catch(Exception) {}
                 }
             }
             toRemoveFileList = new DirectoryEntry[0];
             // Remove folders
             length = toRemoveFolderList.Length;
-            foldersRemoved = 0;
             for(Int32 i = length - 1; i >= 0; i--) {
                 DirectoryEntry e = toRemoveFolderList[i];
                 bool err;
@@ -301,6 +315,7 @@ public class Program {
                     Logger.RemoveLine();
                     Logger.SuccessReason(e.reason, e.relativePath);
                 }
+                else foldersToRemove--;
             }
             toRemoveFolderList = new DirectoryEntry[0];
             // Log copied and removed items
@@ -316,7 +331,7 @@ public class Program {
                 backupFileName = backupFolder + Path.DirectorySeparatorChar + backupFileName;
                 try {
                     ZipFile.CreateFromDirectory(arguments.destination, backupFileName);
-                    Logger.Success("Succesfully created compressed backup (" + Logger.HumanReadableSize((UInt64)new FileInfo(backupFileName).Length) + ")");
+                    Logger.Success("Created compressed backup (" + Logger.HumanReadableSize((UInt64)new FileInfo(backupFileName).Length) + ")");
                 }
                 catch(Exception e) {
                     Logger.Error("Could not create compressed backup, error: " + e);
@@ -345,10 +360,8 @@ public class Program {
     public static async Task<string[]> scanFolder(string path, bool type) {
         return await Task.Run<string[]>(() => {
             string[] array;
-            Logger.Info("Starting " + (type ? "source" : "destination") + " folder scan...");
             try {
-                array = Directory.EnumerateFileSystemEntries(arguments.source, "*", enumOptions).ToArray();
-                Logger.Success((type ? "Source" : "Destination") + " folder scanned: " + array.Length + " items found");
+                array = Directory.EnumerateFileSystemEntries(path, "*", enumOptions).ToArray();
             }
             catch(Exception e) {
                 Logger.Error("Error while scanning " + (type ? "source" : "destination") + " folder: " + e);
@@ -369,16 +382,14 @@ public class Program {
     public static async Task<Dictionary<string, DirectoryEntry>> buildInfoDictionary(string[] list, string path, bool type) {
         return await Task.Run<Dictionary<string, DirectoryEntry>>(() => {
             Dictionary<string, DirectoryEntry> dictionary = new Dictionary<string, DirectoryEntry>();
-            Logger.Info("Building " + (type ? "source" : "destination") + " file info list...");
             try {
                 foreach(string item in list) {
                     string relativePath = item.Substring(path.Length + 1);
                     dictionary[relativePath] = new DirectoryEntry(item, relativePath);
                 }
-                Logger.Success((type ? "Source" : "Destination") + " file info list built");
             }
             catch(Exception e) {
-                Logger.Error("Error while building " + (type ? "source" : "destination") + " file info list: " + e);
+                Logger.Error("Error while building " + (type ? "source" : "destination") + " file info dictionary: " + e);
                 Environment.Exit(2);
             }
             return dictionary;

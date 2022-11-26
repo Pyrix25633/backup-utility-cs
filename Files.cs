@@ -25,8 +25,11 @@ public class DirectoryEntry {
             reason = Reason.CopyNotThere;
             return true;
         }
+        // Remove from destination dictionary to speed up the search for files to remove
+        destinationDictionary.Remove(relativePath);
         // Skip if directory
-        if((e.fileInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory) return false;
+        if((e.fileInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
+            return false;
         // Check size
         if(fileInfo.Length != e.fileInfo.Length) {
             reason = Reason.CopyDifferentSize;
@@ -47,7 +50,9 @@ public class DirectoryEntry {
             stream1.Close();
             stream2.Close();
             bool toCopy = (byte1 != byte2);
-            if(toCopy) reason = Reason.CopyDifferentContent;
+            if(toCopy) {
+                reason = Reason.CopyDifferentContent;
+            }
             return toCopy;
         }
         catch(Exception exc) {
