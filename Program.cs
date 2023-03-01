@@ -6,7 +6,7 @@ public class Program {
     private static EnumerationOptions enumOptions = new EnumerationOptions();
     static async Task Main(string[] args) {
         // Version
-        string version = "1.6.0";
+        string version = "1.6.1";
         // Lists and dictionaries
         string[] sourceList = new string[0], destinationList = new string[0], extensionList = new string[0];
         Dictionary<string, DirectoryEntry> sourceInfoDictionary = new Dictionary<string, DirectoryEntry>();
@@ -330,7 +330,7 @@ public class Program {
                 Logger.Info("Creating compressed backup: " + backupFileName);
                 backupFileName = backupFolder + Path.DirectorySeparatorChar + backupFileName;
                 try {
-                    ZipFile.CreateFromDirectory(arguments.destination, backupFileName);
+                    ZipFile.CreateFromDirectory(arguments.source, backupFileName);
                     Logger.Success("Created compressed backup (" + Logger.HumanReadableSize((UInt64)new FileInfo(backupFileName).Length) + ")");
                 }
                 catch(Exception e) {
