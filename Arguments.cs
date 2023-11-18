@@ -16,7 +16,7 @@ public class Arguments {
     public string? removed, extensions;
     public Int32 time;
     public bool repeat, log, help, allExtensions, backup;
-    public Int16 errors; 
+    public Int16 errors;
 
     /// <summary>
     /// Function to parse the arguments
@@ -85,7 +85,7 @@ public class Arguments {
                         break;
                     case "-f":
                     case "--file":
-                        string line = "backup-tool ";
+                        string line = Path.Join(AppContext.BaseDirectory, "backup-utility") + " ";
                         foreach(string item in args) {
                             line += item + " ";
                         }

@@ -1,4 +1,4 @@
 #!/bin/bash
-VERSION=1.6.1
+VERSION=1.6.2
 DEBUG=0
 RELEASE=1

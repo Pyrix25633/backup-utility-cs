@@ -161,6 +161,32 @@ public class Logger {
         Console.ResetColor();
     }
     /// <summary>
+    /// Function to print a progress bar string, showing only item number progress
+    /// (<paramref name="currentElements"/>, <paramref name="totalElements"/>)
+    /// </summary>
+    /// <param name="currentElements">The current number of elements</param>
+    /// <param name="totalElements">The total number of elements</param>
+    public static void ProgressBarItemsOnly(Int32 currentElements, Int32 totalElements) {
+        string bar = "[";
+        Int16 percent = (Int16)((float)currentElements / totalElements * 100);
+        for(Int16 i = 1; i <= percent; i++) {
+            bar += barFull;
+        }
+        Console.ForegroundColor = ConsoleColor.DarkYellow;
+        Console.Write(bar);
+        bar = "";
+        for(Int16 i = (Int16)(percent + 1); i <= 100; i++) {
+            bar += barEmpty;
+        }
+        Console.BackgroundColor = ConsoleColor.DarkGray;
+        Console.Write(bar);
+        bar = "] " + percent.ToString() + "% (" + currentElements + "/" + totalElements + ")";
+        Console.ResetColor();
+        Console.ForegroundColor = ConsoleColor.DarkYellow;
+        Console.WriteLine(bar);
+        Console.ResetColor();
+    }
+    /// <summary>
     /// Function to print a message of the file that is being copied
     /// (<paramref name="reason"/>, <paramref name="file"/>)
     /// </summary>

@@ -6,7 +6,7 @@ public class Program {
     private static EnumerationOptions enumOptions = new EnumerationOptions();
     static async Task Main(string[] args) {
         // Version
-        string version = "1.6.1";
+        string version = "1.6.2";
         // Lists and dictionaries
         string[] sourceList = new string[0], destinationList = new string[0], extensionList = new string[0];
         Dictionary<string, DirectoryEntry> sourceInfoDictionary = new Dictionary<string, DirectoryEntry>();
@@ -17,7 +17,8 @@ public class Program {
         Int32 length, filesToCopy, filesCopied, foldersToCopy, foldersCopied,
             filesToRemove, filesRemoved, foldersToRemove, foldersRemoved, sleepTime;
         UInt64 sizeToCopy, sizeCopied, sizeToRemove, sizeRemoved;
-        Int64 timestamp;
+        Int32 currentElements, totalElements;
+        Int64 timestamp, timestampElements;
         string backupFolder = "";
         // Parsing arguments
         try {
@@ -148,8 +149,17 @@ public class Program {
             // Items to copy
             Logger.Info("Determining items to copy...");
             filesToCopy = 0; foldersToCopy = 0; sizeToCopy = 0;
+            currentElements = 0; totalElements = sourceInfoDictionary.Count;
+            timestampElements = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds();
+            Logger.ProgressBarItemsOnly(currentElements, totalElements);
             foreach(KeyValuePair<string, DirectoryEntry> entry in sourceInfoDictionary) {
                 DirectoryEntry value = entry.Value;
+                Int64 currentTimestamp = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds();
+                if(currentTimestamp - timestampElements >= 100) {
+                    Logger.RemoveLine();
+                    Logger.ProgressBarItemsOnly(currentElements, totalElements);
+                    timestampElements = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds();
+                }
                 if(value.ToCopy(ref destinationInfoDictionary, arguments.allExtensions, extensionList)) {
                     toCopyList = toCopyList.Append(value).ToArray();
                     if((value.fileInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory) {
@@ -160,15 +170,26 @@ public class Program {
                         sizeToCopy += (UInt64)value.fileInfo.Length;
                     }
                 }
+                currentElements++;
             }
+            Logger.RemoveLine();
             Logger.Success(foldersToCopy.ToString() + " folder" + (foldersToCopy == 1 ? "" : "s") + " and " +
                 filesToCopy.ToString() + " file" + (filesToCopy == 1 ? "" : "s") + " to copy (" +
                 Logger.HumanReadableSize(sizeToCopy) + ")");
             // Items to remove
             Logger.Info("Determining items to remove...");
             filesToRemove = 0; foldersToRemove = 0; sizeToRemove = 0;
+            currentElements = 0; totalElements = destinationInfoDictionary.Count;
+            timestampElements = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds();
+            Logger.ProgressBarItemsOnly(currentElements, totalElements);
             foreach(KeyValuePair<string, DirectoryEntry> entry in destinationInfoDictionary) {
                 DirectoryEntry value = entry.Value;
+                Int64 currentTimestamp = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds();
+                if(currentTimestamp - timestampElements >= 100) {
+                    Logger.RemoveLine();
+                    Logger.ProgressBarItemsOnly(currentElements, totalElements);
+                    timestampElements = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds();
+                }
                 if(value.ToRemove(ref sourceInfoDictionary)) {
                     if((value.fileInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory) {
                         toRemoveFolderList = toRemoveFolderList.Append(value).ToArray();
@@ -180,7 +201,9 @@ public class Program {
                         sizeToRemove += (UInt64)value.fileInfo.Length;
                     }
                 }
+                currentElements++;
             }
+            Logger.RemoveLine();
             Logger.Success(foldersToRemove.ToString() + " folder" + (foldersToRemove == 1 ? "" : "s") + " and " +
                 filesToRemove.ToString() + " file" + (filesToRemove == 1 ? "" : "s") + " to remove (" +
                 Logger.HumanReadableSize(sizeToRemove) + ")");
