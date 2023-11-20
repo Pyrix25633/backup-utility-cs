@@ -1,7 +1,10 @@
 public class DirectoryEntry {
     /// <summary>
     /// Initializer
+    /// (<paramref name="path"/>, <paramref name="relativePath"/>)
     /// </summary>
+    /// <param name="path">The entry absolute path</param>
+    /// <param name="relativePath">The entry path relative to the source/destination folder</param>
     public DirectoryEntry(string path, string relativePath) {
         fileInfo = new FileInfo(path);
         this.relativePath = relativePath;

@@ -235,7 +235,7 @@ public class Logger {
         Success(line + file + " (" + ((size != null) ? HumanReadableSize((UInt64)size) : "folder") + ")");
     }
     /// <summary>
-    /// Function to print a progress bar string
+    /// Function to convert a file size into a readable format
     /// (<paramref name="size"/>)
     /// </summary>
     /// <param name="size">The size in bytes</param>
