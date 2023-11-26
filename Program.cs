@@ -6,7 +6,7 @@ public class Program {
     private static EnumerationOptions enumOptions = new EnumerationOptions();
     static async Task Main(string[] args) {
         // Version
-        string version = "1.6.2";
+        string version = "1.6.3";
         // Lists and dictionaries
         string[] sourceList = new string[0], destinationList = new string[0], extensionList = new string[0];
         Dictionary<string, DirectoryEntry> sourceInfoDictionary = new Dictionary<string, DirectoryEntry>();
@@ -61,7 +61,11 @@ public class Program {
         }
         // Getting full path
         arguments.source = new FileInfo(arguments.source).FullName;
+        char c = arguments.source[arguments.source.Length - 1];
+        if(c == '/' || c == '\\') arguments.source = arguments.source.Substring(0, arguments.source.Length - 1);
         arguments.destination = new FileInfo(arguments.destination).FullName;
+        c = arguments.destination[arguments.destination.Length - 1];
+        if(c == '/' || c == '\\') arguments.destination = arguments.destination.Substring(0, arguments.destination.Length - 1);
         // Removed
         if(arguments.removed != null) {
             Logger.Info("Folder for removed files: " + arguments.removed);

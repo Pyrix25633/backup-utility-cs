@@ -4,6 +4,7 @@ RUN apt-get -y update
 RUN apt-get -y install zip
 WORKDIR /app
 COPY *.csproj ./
+RUN dotnet restore
 COPY *.cs ./
 COPY launch-compilation.sh ./
 RUN chmod +x /app/launch-compilation.sh
