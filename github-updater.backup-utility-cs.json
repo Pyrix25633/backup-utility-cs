@@ -1,7 +1,12 @@
 {
-  "latest": "1.6.3",
+  "latest": "1.6.4",
   "keep": [],
   "releases": [
+    {
+      "tag": "1.6.4",
+      "linux": "backup-utility-1.6.4-linux-x64.tar.gz",
+      "win": "backup-utility-1.6.4-win-x64.zip"
+    },
     {
       "tag": "1.6.3",
       "linux": "backup-utility-1.6.3-linux-x64.tar.gz",

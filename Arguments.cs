@@ -85,10 +85,13 @@ public class Arguments {
                         break;
                     case "-f":
                     case "--file":
-                        string line = Path.Join(AppContext.BaseDirectory, "backup-utility") + " ";
-                        foreach(string item in args) {
-                            line += item + " ";
-                        }
+                        string line = Path.Join(AppContext.BaseDirectory, "backup-utility");
+                        line += " --source " + source.Replace(" ", "\\ ") + " --destination " + destination.Replace(" ", "\\ ");
+                        if(removed != null) line += " --removed " + removed;
+                        if(repeat) line += " --time " + time;
+                        if(extensions != null) line += " --extensions " + extensions;
+                        if(log) line += " --log";
+                        if(backup) line += " --backup";
                         File.WriteAllTextAsync(args[i + 1], line);
                         break;
                     case "-h":
